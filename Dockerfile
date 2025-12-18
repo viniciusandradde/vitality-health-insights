@@ -15,8 +15,8 @@ RUN pnpm install
 COPY . .
 
 # Expor porta
-EXPOSE 3000
+EXPOSE 3004
 
 # Comando para desenvolvimento (hot reload)
-CMD ["pnpm", "run", "dev", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["pnpm", "run", "dev", "--host", "0.0.0.0", "--port", "3004"]
 

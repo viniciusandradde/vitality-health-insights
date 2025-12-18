@@ -24,7 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, CheckCircle, XCircle, Download, Search } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, Download, Search, Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Agendamento, FilterParams, AgendasKPI, AgendamentoPorDia } from '@/types/assistencial';
 import { formatDate, formatDateTime } from '@/lib/formatters';
@@ -32,7 +32,6 @@ import { AGENDAMENTO_STATUS } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { assistencialApi } from '@/api/endpoints/assistencial';
 import { useAgendasKPIs } from '@/hooks/use-assistencial-kpis';
-import { Calendar, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 export default function AgendasPage() {
   const [filters, setFilters] = useState<FilterParams>({
@@ -160,7 +159,7 @@ export default function AgendasPage() {
           />
           <KPICard
             title="Agendados"
-            value={kpiData.por_especialidade?.reduce((acc: number, item: any) => acc + (item.agendados || 0), 0).toString() || '0'}
+            value={kpiData.por_especialidade?.reduce((acc: number, item: { agendados?: number }) => acc + (item.agendados || 0), 0).toString() || '0'}
             icon={Clock}
             variant="success"
           />
@@ -200,7 +199,7 @@ export default function AgendasPage() {
         >
           <SimpleBarChart
             data={
-              kpiData?.por_especialidade?.map((item: any) => ({
+              kpiData?.por_especialidade?.map((item: { specialty?: string; total?: number }) => ({
                 name: item.specialty || 'N/A',
                 value: item.total || 0,
               })) || []

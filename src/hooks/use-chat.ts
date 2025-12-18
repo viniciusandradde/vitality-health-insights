@@ -96,7 +96,7 @@ export function useChat() {
     (data: unknown) => {
       // TODO: Implementar processamento de mensagens do WebSocket
       // Isso dependerá do formato das mensagens do backend
-      console.log('WebSocket message received:', data);
+      // console.debug('WebSocket message received:', data);
     },
     []
   );

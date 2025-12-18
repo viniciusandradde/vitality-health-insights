@@ -71,7 +71,7 @@ export default function Dashboard() {
   });
 
   // Transformar ocupacaoSetor para formato do gráfico
-  const ocupacaoSemanal = ocupacaoSetor?.reduce((acc: any, item: any) => {
+  const ocupacaoSemanal = ocupacaoSetor?.reduce((acc: Record<string, { name: string; [key: string]: string | number }>, item) => {
     const setorKey = item.setor.toLowerCase().includes('uti') ? 'uti' : 
                      item.setor.toLowerCase().includes('enfermaria') ? 'enfermaria' : 
                      item.setor.toLowerCase().includes('emergencia') ? 'emergencia' : 'outros';
@@ -229,7 +229,7 @@ export default function Dashboard() {
             </div>
           ) : ocupacaoSetor && ocupacaoSetor.length > 0 ? (
             <SimpleBarChart
-              data={ocupacaoSetor.map((item: any) => ({
+              data={ocupacaoSetor.map((item) => ({
                 name: item.setor,
                 value: item.taxa,
               }))}
@@ -340,9 +340,9 @@ export default function Dashboard() {
             { time: '14:15', event: 'Cirurgia concluída', patient: 'Paciente #4432', sector: 'Centro Cirúrgico', status: 'success' },
             { time: '14:05', event: 'Exame liberado', patient: 'Paciente #4601', sector: 'Laboratório', status: 'default' },
             { time: '13:58', event: 'Alerta crítico', patient: 'Paciente #4523', sector: 'UTI Neonatal', status: 'destructive' },
-          ].map((item, index) => (
+          ].map((item) => (
             <div
-              key={index}
+              key={`${item.time}-${item.patient}`}
               className="flex items-center gap-4 rounded-lg border border-border bg-background p-3"
             >
               <span className="text-sm font-medium text-muted-foreground">{item.time}</span>

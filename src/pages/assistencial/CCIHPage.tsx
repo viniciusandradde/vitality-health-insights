@@ -24,7 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheck, AlertTriangle, CheckCircle, Download, Search } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, CheckCircle, Download, Search, Activity, FileWarning } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { CCIHRecord, FilterParams, CCIHKPI, InfecaoPorTipo } from '@/types/assistencial';
 import { formatDate } from '@/lib/formatters';
@@ -32,7 +32,6 @@ import { CCIH_STATUS } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { assistencialApi } from '@/api/endpoints/assistencial';
 import { useCCIHKPIs } from '@/hooks/use-assistencial-kpis';
-import { AlertTriangle, CheckCircle, Activity, FileWarning } from 'lucide-react';
 
 export default function CCIHPage() {
   const [filters, setFilters] = useState<FilterParams>({
@@ -135,13 +134,13 @@ export default function CCIHPage() {
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KPICard
             title="Infecções Ativas"
-            value={kpiData.por_tipo?.reduce((acc: number, item: any) => acc + (item.casos_ativos || 0), 0).toString() || '0'}
+            value={kpiData.por_tipo?.reduce((acc: number, item: { casos_ativos?: number }) => acc + (item.casos_ativos || 0), 0).toString() || '0'}
             icon={AlertTriangle}
             variant="warning"
           />
           <KPICard
             title="Infecções Resolvidas"
-            value={kpiData.por_tipo?.reduce((acc: number, item: any) => acc + (item.casos_resolvidos || 0), 0).toString() || '0'}
+            value={kpiData.por_tipo?.reduce((acc: number, item: { casos_resolvidos?: number }) => acc + (item.casos_resolvidos || 0), 0).toString() || '0'}
             icon={CheckCircle}
             variant="success"
           />
@@ -170,7 +169,7 @@ export default function CCIHPage() {
         >
           <SimpleBarChart
             data={
-              kpiData?.por_tipo?.map((item: any) => ({
+              kpiData?.por_tipo?.map((item: { tipo?: string; casos_ativos?: number }) => ({
                 name: item.infection_type || 'N/A',
                 value: item.total_casos || 0,
               })) || []
@@ -186,7 +185,7 @@ export default function CCIHPage() {
         >
           <MultiLineChart
             data={
-              kpiData?.evolucao?.map((item: any) => ({
+              kpiData?.evolucao?.map((item: { date?: string; count?: number }) => ({
                 dia: item.date || '',
                 novos: item.novos_casos || 0,
                 resolvidos: item.casos_resolvidos || 0,

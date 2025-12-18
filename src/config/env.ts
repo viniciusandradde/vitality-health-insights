@@ -18,8 +18,8 @@ function getEnvVar(key: string, defaultValue?: string): string {
 }
 
 export const env: EnvConfig = {
-  apiBaseUrl: getEnvVar('VITE_API_BASE_URL', 'http://localhost:8000'),
-  wsUrl: getEnvVar('VITE_WS_URL', 'ws://localhost:8000/ws'),
+  apiBaseUrl: getEnvVar('VITE_API_BASE_URL', 'http://localhost:8004'),
+  wsUrl: getEnvVar('VITE_WS_URL', 'ws://localhost:8004/ws'),
   appEnv: (getEnvVar('VITE_APP_ENV', 'development') as EnvConfig['appEnv']) || 'development',
 };
 

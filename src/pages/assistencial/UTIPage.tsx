@@ -24,7 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { HeartPulse, AlertTriangle, Clock, BedDouble, Download, Search } from 'lucide-react';
+import { HeartPulse, AlertTriangle, Clock, BedDouble, Download, Search, Activity, AlertCircle, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { UTIPatient, FilterParams, UTIKPI } from '@/types/assistencial';
 import { formatDate } from '@/lib/formatters';
@@ -32,7 +32,6 @@ import { UTI_SEVERITY, UTI_STATUS } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { assistencialApi } from '@/api/endpoints/assistencial';
 import { useUTIKPIs } from '@/hooks/use-assistencial-kpis';
-import { Activity, AlertCircle, Clock, Users } from 'lucide-react';
 
 export default function UTIPage() {
   const [filters, setFilters] = useState<FilterParams>({

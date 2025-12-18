@@ -175,7 +175,7 @@ export default function AtendimentosPage() {
             />
             <KPICard
               title="Atendimentos Ativos"
-              value={kpiData.ocupacao_por_especialidade?.reduce((acc: number, item: any) => acc + (item.ativos || 0), 0).toString() || '0'}
+              value={kpiData.ocupacao_por_especialidade?.reduce((acc: number, item) => acc + (item.ativos || 0), 0).toString() || '0'}
               icon={Activity}
               variant="default"
             />
@@ -294,7 +294,7 @@ export default function AtendimentosPage() {
           ) : (
             <SimpleBarChart
               data={
-                kpiData?.ocupacao_por_especialidade?.map((item: any) => ({
+                kpiData?.ocupacao_por_especialidade?.map((item) => ({
                   name: item.specialty || 'N/A',
                   value: item.total || 0,
                 })) || []

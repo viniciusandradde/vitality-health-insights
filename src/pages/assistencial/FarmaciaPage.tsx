@@ -24,7 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Pill, AlertTriangle, Package, DollarSign, Download, Search } from 'lucide-react';
+import { Pill, AlertTriangle, Package, DollarSign, Download, Search, ShoppingCart } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Medicamento, FarmaciaKPI } from '@/types/assistencial';
 import { formatDate, formatCurrency } from '@/lib/formatters';
@@ -32,7 +32,6 @@ import { MEDICAMENTO_STATUS } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { assistencialApi } from '@/api/endpoints/assistencial';
 import { useFarmaciaKPIs } from '@/hooks/use-assistencial-kpis';
-import { Package, AlertTriangle, ShoppingCart, DollarSign } from 'lucide-react';
 
 export default function FarmaciaPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -196,7 +195,7 @@ export default function FarmaciaPage() {
             </div>
           ) : evolucaoEstoque && evolucaoEstoque.length > 0 ? (
             <SimpleLineChart
-              data={evolucaoEstoque.map((item: any) => ({
+              data={evolucaoEstoque.map((item: { date?: string; value?: number }) => ({
                 date: formatDate(item.date, 'dd/MM'),
                 quantidade: item.quantidade,
               }))}

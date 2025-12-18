@@ -24,7 +24,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FlaskConical, Clock, CheckCircle, Download, Search } from 'lucide-react';
+import { FlaskConical, Clock, CheckCircle, Download, Search, FileText, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ExameLaboratorial, FilterParams, ExamesKPI } from '@/types/assistencial';
 import { formatDateTime, formatDuration } from '@/lib/formatters';
@@ -32,7 +32,6 @@ import { EXAME_STATUS } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { assistencialApi } from '@/api/endpoints/assistencial';
 import { useExamesKPIs } from '@/hooks/use-assistencial-kpis';
-import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ExamesLabPage() {
   const [filters, setFilters] = useState<FilterParams>({

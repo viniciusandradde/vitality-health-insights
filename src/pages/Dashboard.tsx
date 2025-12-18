@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Users,
   Clock,
@@ -27,53 +28,71 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-// Sample data
-const atendimentosHora = [
-  { hora: '06h', value: 12 },
-  { hora: '08h', value: 45 },
-  { hora: '10h', value: 78 },
-  { hora: '12h', value: 65 },
-  { hora: '14h', value: 82 },
-  { hora: '16h', value: 71 },
-  { hora: '18h', value: 55 },
-  { hora: '20h', value: 38 },
-  { hora: '22h', value: 22 },
-];
-
-const especialidadesData = [
-  { name: 'Clínica Geral', value: 245 },
-  { name: 'Pediatria', value: 189 },
-  { name: 'Ortopedia', value: 156 },
-  { name: 'Cardiologia', value: 134 },
-  { name: 'Ginecologia', value: 98 },
-];
-
-const ocupacaoSemanal = [
-  { dia: 'Seg', uti: 85, enfermaria: 72, emergencia: 65 },
-  { dia: 'Ter', uti: 88, enfermaria: 75, emergencia: 70 },
-  { dia: 'Qua', uti: 92, enfermaria: 78, emergencia: 68 },
-  { dia: 'Qui', uti: 87, enfermaria: 74, emergencia: 72 },
-  { dia: 'Sex', uti: 95, enfermaria: 80, emergencia: 75 },
-  { dia: 'Sáb', uti: 82, enfermaria: 68, emergencia: 60 },
-  { dia: 'Dom', uti: 78, enfermaria: 62, emergencia: 55 },
-];
-
-const conveniosData = [
-  { name: 'SUS', value: 45 },
-  { name: 'Unimed', value: 25 },
-  { name: 'Bradesco', value: 15 },
-  { name: 'Particular', value: 10 },
-  { name: 'Outros', value: 5 },
-];
+import { useQuery } from '@tanstack/react-query';
+import { kpiApi } from '@/api/endpoints/kpi';
 
 export default function Dashboard() {
+  const [period, setPeriod] = useState<string>('today');
+  const [sector, setSector] = useState<string>('all');
+
+  const filters = {
+    period: period === 'today' ? 'today' : period,
+    sector: sector === 'all' ? undefined : sector,
+  };
+
+  const { data: dashboardKPIs, isLoading: kpisLoading, error: kpisError } = useQuery({
+    queryKey: ['dashboard-kpis', filters],
+    queryFn: () => kpiApi.getDashboardKPIs(filters),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: atendimentosHora, isLoading: horaLoading } = useQuery({
+    queryKey: ['atendimentos-hora', filters],
+    queryFn: () => kpiApi.getAtendimentosPorHora(filters),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: ocupacaoSetor, isLoading: ocupacaoLoading } = useQuery({
+    queryKey: ['ocupacao-setor', filters],
+    queryFn: () => kpiApi.getOcupacaoPorSetor(filters),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: especialidadesData, isLoading: especialidadesLoading } = useQuery({
+    queryKey: ['especialidades', filters],
+    queryFn: () => kpiApi.getEspecialidadesData(filters),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: conveniosData, isLoading: conveniosLoading } = useQuery({
+    queryKey: ['convenios', filters],
+    queryFn: () => kpiApi.getConveniosData(filters),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Transformar ocupacaoSetor para formato do gráfico
+  const ocupacaoSemanal = ocupacaoSetor?.reduce((acc: any, item: any) => {
+    const setorKey = item.setor.toLowerCase().includes('uti') ? 'uti' : 
+                     item.setor.toLowerCase().includes('enfermaria') ? 'enfermaria' : 
+                     item.setor.toLowerCase().includes('emergencia') ? 'emergencia' : 'outros';
+    
+    // Criar estrutura básica se não existir
+    if (!acc[setorKey]) {
+      acc[setorKey] = {};
+    }
+    
+    // Adicionar dados (simplificado - em produção, seria necessário agrupar por dia)
+    acc[setorKey] = item.taxa;
+    
+    return acc;
+  }, {}) || {};
+
   return (
     <AppLayout title="Dashboard" subtitle="Visão geral do hospital">
       {/* Filters */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Select defaultValue="today">
+          <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[180px] bg-card">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
@@ -85,7 +104,7 @@ export default function Dashboard() {
             </SelectContent>
           </Select>
           
-          <Select defaultValue="all">
+          <Select value={sector} onValueChange={setSector}>
             <SelectTrigger className="w-[180px] bg-card">
               <SelectValue placeholder="Setor" />
             </SelectTrigger>
@@ -106,65 +125,75 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Atendimentos Hoje"
-          value="847"
-          icon={Users}
-          trend={{ value: 12.5, label: 'vs ontem' }}
-          variant="default"
-        />
-        <KPICard
-          title="Tempo Médio Espera"
-          value="32 min"
-          icon={Clock}
-          trend={{ value: -8.3, label: 'vs semana' }}
-          variant="success"
-        />
-        <KPICard
-          title="Taxa Ocupação UTI"
-          value="87%"
-          icon={BedDouble}
-          trend={{ value: 3.2, label: 'vs ontem' }}
-          variant="warning"
-        />
-        <KPICard
-          title="Cirurgias Realizadas"
-          value="23"
-          icon={Activity}
-          trend={{ value: 0, label: 'estável' }}
-        />
-      </div>
+      {kpisLoading ? (
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 animate-pulse bg-muted rounded-lg" />
+          ))}
+        </div>
+      ) : kpisError ? (
+        <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg">
+          Erro ao carregar KPIs. Tente novamente.
+        </div>
+      ) : dashboardKPIs ? (
+        <>
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <KPICard
+              title="Atendimentos Hoje"
+              value={dashboardKPIs.atendimentos_hoje?.toString() || '0'}
+              icon={Users}
+              variant="default"
+            />
+            <KPICard
+              title="Tempo Médio Espera"
+              value={`${Math.round(dashboardKPIs.tempo_medio_espera || 0)} min`}
+              icon={Clock}
+              variant={dashboardKPIs.tempo_medio_espera < 30 ? 'success' : 'default'}
+            />
+            <KPICard
+              title="Taxa Ocupação UTI"
+              value={`${Math.round(dashboardKPIs.taxa_ocupacao_uti || 0)}%`}
+              icon={BedDouble}
+              variant={dashboardKPIs.taxa_ocupacao_uti > 85 ? 'warning' : 'default'}
+            />
+            <KPICard
+              title="Agendamentos Hoje"
+              value={dashboardKPIs.agendamentos_hoje?.toString() || '0'}
+              icon={Activity}
+              variant="default"
+            />
+          </div>
 
-      {/* Secondary KPIs */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Leitos Disponíveis"
-          value="42"
-          icon={BedDouble}
-          description="de 180 leitos totais"
-        />
-        <KPICard
-          title="Agendamentos Hoje"
-          value="156"
-          icon={Calendar}
-          trend={{ value: 5.2, label: 'vs média' }}
-        />
-        <KPICard
-          title="Alertas Ativos"
-          value="7"
-          icon={AlertTriangle}
-          variant="destructive"
-          description="2 críticos, 5 moderados"
-        />
-        <KPICard
-          title="Altas Previstas"
-          value="28"
-          icon={CheckCircle}
-          variant="success"
-          description="para hoje"
-        />
-      </div>
+          {/* Secondary KPIs */}
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <KPICard
+              title="Leitos Disponíveis"
+              value={dashboardKPIs.leitos_disponiveis?.toString() || '0'}
+              icon={BedDouble}
+              variant="success"
+            />
+            <KPICard
+              title="Exames Pendentes"
+              value={dashboardKPIs.exames_pendentes?.toString() || '0'}
+              icon={Calendar}
+              variant={dashboardKPIs.exames_pendentes > 50 ? 'warning' : 'default'}
+            />
+            <KPICard
+              title="Altas Previstas"
+              value={dashboardKPIs.altas_previstas?.toString() || '0'}
+              icon={CheckCircle}
+              variant="success"
+              description="para hoje"
+            />
+            <KPICard
+              title="Taxa Ocupação UTI"
+              value={`${Math.round(dashboardKPIs.taxa_ocupacao_uti || 0)}%`}
+              icon={BedDouble}
+              variant={dashboardKPIs.taxa_ocupacao_uti > 85 ? 'warning' : 'default'}
+            />
+          </div>
+        </>
+      ) : null}
 
       {/* Charts Row 1 */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -177,65 +206,128 @@ export default function Dashboard() {
             </Button>
           }
         >
-          <SimpleAreaChart data={atendimentosHora} dataKey="value" xAxisKey="hora" height={250} />
+          {horaLoading ? (
+            <div className="flex items-center justify-center h-[250px]">
+              <div className="text-muted-foreground">Carregando...</div>
+            </div>
+          ) : atendimentosHora && atendimentosHora.length > 0 ? (
+            <SimpleAreaChart data={atendimentosHora} dataKey="value" xAxisKey="hora" height={250} />
+          ) : (
+            <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+              Nenhum dado disponível
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard
-          title="Ocupação Semanal por Setor"
+          title="Ocupação por Setor"
           description="Comparativo de ocupação"
         >
-          <MultiLineChart
-            data={ocupacaoSemanal}
-            xAxisKey="dia"
-            height={250}
-            lines={[
-              { dataKey: 'uti', color: 'hsl(0, 72%, 50%)', name: 'UTI' },
-              { dataKey: 'enfermaria', color: 'hsl(200, 98%, 39%)', name: 'Enfermaria' },
-              { dataKey: 'emergencia', color: 'hsl(38, 92%, 50%)', name: 'Emergência' },
-            ]}
-          />
+          {ocupacaoLoading ? (
+            <div className="flex items-center justify-center h-[250px]">
+              <div className="text-muted-foreground">Carregando...</div>
+            </div>
+          ) : ocupacaoSetor && ocupacaoSetor.length > 0 ? (
+            <SimpleBarChart
+              data={ocupacaoSetor.map((item: any) => ({
+                name: item.setor,
+                value: item.taxa,
+              }))}
+              dataKey="value"
+              height={250}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+              Nenhum dado disponível
+            </div>
+          )}
         </ChartCard>
       </div>
 
       {/* Charts Row 2 */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <ChartCard title="Top 5 Especialidades" description="Por volume de atendimentos">
-          <SimpleBarChart data={especialidadesData} dataKey="value" height={220} />
+          {especialidadesLoading ? (
+            <div className="flex items-center justify-center h-[220px]">
+              <div className="text-muted-foreground">Carregando...</div>
+            </div>
+          ) : especialidadesData && especialidadesData.length > 0 ? (
+            <SimpleBarChart data={especialidadesData} dataKey="value" height={220} />
+          ) : (
+            <div className="flex items-center justify-center h-[220px] text-muted-foreground">
+              Nenhum dado disponível
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard title="Distribuição por Convênio" description="Atendimentos do mês">
-          <div className="flex items-center justify-center">
-            <SimplePieChart data={conveniosData} height={220} />
-          </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-3">
-            {conveniosData.map((item, index) => (
-              <div key={item.name} className="flex items-center gap-1.5">
-                <div
-                  className="h-3 w-3 rounded-full"
-                  style={{
-                    backgroundColor: [
-                      'hsl(200, 98%, 39%)',
-                      'hsl(142, 76%, 36%)',
-                      'hsl(38, 92%, 50%)',
-                      'hsl(0, 72%, 50%)',
-                      'hsl(262, 83%, 58%)',
-                    ][index],
-                  }}
-                />
-                <span className="text-xs text-muted-foreground">{item.name}</span>
+          {conveniosLoading ? (
+            <div className="flex items-center justify-center h-[220px]">
+              <div className="text-muted-foreground">Carregando...</div>
+            </div>
+          ) : conveniosData && conveniosData.length > 0 ? (
+            <>
+              <div className="flex items-center justify-center">
+                <SimplePieChart data={conveniosData} height={220} />
               </div>
-            ))}
-          </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-3">
+                {conveniosData.map((item, index) => (
+                  <div key={item.name} className="flex items-center gap-1.5">
+                    <div
+                      className="h-3 w-3 rounded-full"
+                      style={{
+                        backgroundColor: [
+                          'hsl(200, 98%, 39%)',
+                          'hsl(142, 76%, 36%)',
+                          'hsl(38, 92%, 50%)',
+                          'hsl(0, 72%, 50%)',
+                          'hsl(262, 83%, 58%)',
+                        ][index],
+                      }}
+                    />
+                    <span className="text-xs text-muted-foreground">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-[220px] text-muted-foreground">
+              Nenhum dado disponível
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard title="Indicadores de Qualidade" description="Métricas em tempo real">
-          <div className="flex flex-col items-center justify-center gap-6 py-4">
-            <GaugeChart value={87} label="Taxa de Ocupação UTI" size="lg" />
-            <div className="grid grid-cols-2 gap-8">
-              <GaugeChart value={92} label="Satisfação" size="md" variant="success" />
-              <GaugeChart value={78} label="SLA Atendimento" size="md" />
+          {kpisLoading ? (
+            <div className="flex items-center justify-center h-[220px]">
+              <div className="text-muted-foreground">Carregando...</div>
             </div>
-          </div>
+          ) : dashboardKPIs ? (
+            <div className="flex flex-col items-center justify-center gap-6 py-4">
+              <GaugeChart 
+                value={Math.round(dashboardKPIs.taxa_ocupacao_uti || 0)} 
+                label="Taxa de Ocupação UTI" 
+                size="lg" 
+              />
+              <div className="grid grid-cols-2 gap-8">
+                <GaugeChart 
+                  value={dashboardKPIs.tempo_medio_espera < 30 ? 92 : 78} 
+                  label="SLA Atendimento" 
+                  size="md" 
+                  variant={dashboardKPIs.tempo_medio_espera < 30 ? 'success' : 'default'}
+                />
+                <GaugeChart 
+                  value={Math.round((dashboardKPIs.leitos_disponiveis || 0) / 180 * 100)} 
+                  label="Leitos Disponíveis" 
+                  size="md" 
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[220px] text-muted-foreground">
+              Nenhum dado disponível
+            </div>
+          )}
         </ChartCard>
       </div>
 

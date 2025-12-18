@@ -15,6 +15,7 @@ import {
   HeartPulse,
   ClipboardList,
   BedDouble,
+  MessageSquare,
 } from 'lucide-react';
 import { NavSection } from '@/types/navigation';
 
@@ -23,6 +24,11 @@ export const navigationConfig: NavSection[] = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     path: '/',
+  },
+  {
+    label: 'Chat',
+    icon: MessageSquare,
+    path: '/chat',
   },
   {
     label: 'Assistencial',

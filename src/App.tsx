@@ -4,7 +4,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
+import Chat from "./pages/Chat";
 import { ModulePage } from "./pages/ModulePage";
+import AtendimentosPage from "./pages/assistencial/AtendimentosPage";
+import InternacaoPage from "./pages/assistencial/InternacaoPage";
+import AgendasPage from "./pages/assistencial/AgendasPage";
+import ExamesLabPage from "./pages/assistencial/ExamesLabPage";
+import FarmaciaPage from "./pages/assistencial/FarmaciaPage";
+import UTIPage from "./pages/assistencial/UTIPage";
+import CCIHPage from "./pages/assistencial/CCIHPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,15 +25,16 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/chat" element={<Chat />} />
           
           {/* Assistencial */}
-          <Route path="/assistencial/atendimentos" element={<ModulePage title="Atendimentos" subtitle="Análise de atendimentos em tempo real" />} />
-          <Route path="/assistencial/internacao" element={<ModulePage title="Internação" subtitle="Gestão de leitos e internações" />} />
-          <Route path="/assistencial/agendas" element={<ModulePage title="Agendas" subtitle="Gestão de agendamentos" />} />
-          <Route path="/assistencial/exames-lab" element={<ModulePage title="Exames Laboratoriais" subtitle="Análise de exames" />} />
-          <Route path="/assistencial/farmacia" element={<ModulePage title="Farmácia" subtitle="Gestão farmacêutica" />} />
-          <Route path="/assistencial/uti" element={<ModulePage title="UTI" subtitle="Unidade de Terapia Intensiva" />} />
-          <Route path="/assistencial/ccih" element={<ModulePage title="CCIH" subtitle="Controle de Infecção Hospitalar" />} />
+          <Route path="/assistencial/atendimentos" element={<AtendimentosPage />} />
+          <Route path="/assistencial/internacao" element={<InternacaoPage />} />
+          <Route path="/assistencial/agendas" element={<AgendasPage />} />
+          <Route path="/assistencial/exames-lab" element={<ExamesLabPage />} />
+          <Route path="/assistencial/farmacia" element={<FarmaciaPage />} />
+          <Route path="/assistencial/uti" element={<UTIPage />} />
+          <Route path="/assistencial/ccih" element={<CCIHPage />} />
           
           {/* Gerencial */}
           <Route path="/gerencial/financeiro" element={<ModulePage title="Financeiro" subtitle="Gestão financeira" />} />

@@ -23,12 +23,8 @@ const COLORS = [
   'hsl(262, 83%, 58%)',
 ];
 
-interface ChartDataPoint {
-  [key: string]: string | number | undefined;
-}
-
 interface BaseChartProps {
-  data: ChartDataPoint[];
+  data: any[];
   dataKey: string;
   xAxisKey?: string;
   height?: number;
@@ -168,7 +164,7 @@ export function SimplePieChart({ data, height = 200 }: { data: PieChartData[]; h
 }
 
 interface MultiLineChartProps {
-  data: ChartDataPoint[];
+  data: any[];
   lines: { dataKey: string; color: string; name: string }[];
   xAxisKey?: string;
   height?: number;

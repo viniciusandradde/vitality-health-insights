@@ -15,6 +15,15 @@ import {
   HeartPulse,
   ClipboardList,
   BedDouble,
+  UtensilsCrossed,
+  Dumbbell,
+  Scan,
+  Droplet,
+  Hospital,
+  HardHat,
+  Sparkles,
+  Shirt,
+  Monitor,
 } from 'lucide-react';
 import { NavSection } from '@/types/navigation';
 
@@ -35,16 +44,34 @@ export const navigationConfig: NavSection[] = [
         description: 'Análise tempo real',
       },
       {
-        label: 'Internação',
-        path: '/assistencial/internacao',
-        icon: BedDouble,
-        description: 'Gestão de leitos',
+        label: 'Ambulatório',
+        path: '/assistencial/ambulatorio',
+        icon: Hospital,
+        description: 'Gestão ambulatorial',
       },
       {
         label: 'Agendas',
         path: '/assistencial/agendas',
         icon: Calendar,
         description: 'Agendamentos',
+      },
+      {
+        label: 'Agência Transfusional',
+        path: '/assistencial/agencia-transfusional',
+        icon: Droplet,
+        description: 'Controle de sangue',
+      },
+      {
+        label: 'CCIH',
+        path: '/assistencial/ccih',
+        icon: ShieldCheck,
+        description: 'Controle Infecção',
+      },
+      {
+        label: 'Exames de Imagem',
+        path: '/assistencial/exames-imagem',
+        icon: Scan,
+        description: 'Gestão de exames',
       },
       {
         label: 'Exames Laboratoriais',
@@ -57,15 +84,27 @@ export const navigationConfig: NavSection[] = [
         icon: Pill,
       },
       {
+        label: 'Fisioterapia',
+        path: '/assistencial/fisioterapia',
+        icon: Dumbbell,
+        description: 'Análise de sessões',
+      },
+      {
+        label: 'Internação',
+        path: '/assistencial/internacao',
+        icon: BedDouble,
+        description: 'Gestão de leitos',
+      },
+      {
+        label: 'Nutrição',
+        path: '/assistencial/nutricao',
+        icon: UtensilsCrossed,
+        description: 'Gestão nutricional',
+      },
+      {
         label: 'UTI',
         path: '/assistencial/uti',
         icon: HeartPulse,
-      },
-      {
-        label: 'CCIH',
-        path: '/assistencial/ccih',
-        icon: ShieldCheck,
-        description: 'Controle Infecção',
       },
     ],
   },
@@ -74,9 +113,9 @@ export const navigationConfig: NavSection[] = [
     icon: Building2,
     submenu: [
       {
-        label: 'Financeiro',
-        path: '/gerencial/financeiro',
-        icon: Wallet,
+        label: 'Estoque',
+        path: '/gerencial/estoque',
+        icon: Package,
       },
       {
         label: 'Faturamento',
@@ -84,14 +123,38 @@ export const navigationConfig: NavSection[] = [
         icon: FileText,
       },
       {
-        label: 'Estoque',
-        path: '/gerencial/estoque',
-        icon: Package,
+        label: 'Financeiro',
+        path: '/gerencial/financeiro',
+        icon: Wallet,
+      },
+      {
+        label: 'Higienização',
+        path: '/gerencial/higienizacao',
+        icon: Sparkles,
+        description: 'Gestão de limpeza',
+      },
+      {
+        label: 'Lavanderia',
+        path: '/gerencial/lavanderia',
+        icon: Shirt,
+        description: 'Gestão de roupas',
       },
       {
         label: 'Relatórios',
         path: '/gerencial/relatorios',
         icon: ClipboardList,
+      },
+      {
+        label: 'SESMT',
+        path: '/gerencial/sesmt',
+        icon: HardHat,
+        description: 'Segurança do Trabalho',
+      },
+      {
+        label: 'TI',
+        path: '/gerencial/ti',
+        icon: Monitor,
+        description: 'Tecnologia da Informação',
       },
     ],
   },

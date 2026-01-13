@@ -24,6 +24,12 @@ import {
   Sparkles,
   Shirt,
   Monitor,
+  User,
+  LayoutGrid,
+  Plug,
+  Bell,
+  Shield,
+  CreditCard,
 } from 'lucide-react';
 import { NavSection } from '@/types/navigation';
 
@@ -161,6 +167,61 @@ export const navigationConfig: NavSection[] = [
   {
     label: 'Configurações',
     icon: Settings,
-    path: '/configuracoes',
+    submenu: [
+      {
+        label: 'Visão Geral',
+        path: '/configuracoes',
+        icon: Settings,
+        description: 'Configurações do sistema',
+      },
+      {
+        label: 'Perfil',
+        path: '/configuracoes/perfil',
+        icon: User,
+        description: 'Seu perfil pessoal',
+      },
+      {
+        label: 'Organização',
+        path: '/configuracoes/organizacao',
+        icon: Building2,
+        description: 'Dados do hospital',
+      },
+      {
+        label: 'Equipe',
+        path: '/configuracoes/equipe',
+        icon: Users,
+        description: 'Gestão de usuários',
+      },
+      {
+        label: 'Módulos',
+        path: '/configuracoes/modulos',
+        icon: LayoutGrid,
+        description: 'Ativar/desativar módulos',
+      },
+      {
+        label: 'Integrações',
+        path: '/configuracoes/integracoes',
+        icon: Plug,
+        description: 'Integrações externas',
+      },
+      {
+        label: 'Notificações',
+        path: '/configuracoes/notificacoes',
+        icon: Bell,
+        description: 'Preferências de alertas',
+      },
+      {
+        label: 'Segurança',
+        path: '/configuracoes/seguranca',
+        icon: Shield,
+        description: 'Logs e auditoria',
+      },
+      {
+        label: 'Plano e Faturamento',
+        path: '/configuracoes/plano',
+        icon: CreditCard,
+        description: 'Assinatura e faturas',
+      },
+    ],
   },
 ];

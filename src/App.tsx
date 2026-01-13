@@ -16,6 +16,9 @@ import LaboratorioPage from "./pages/modules/assistencial/LaboratorioPage";
 import ImagemPage from "./pages/modules/assistencial/ImagemPage";
 import TransfusionalPage from "./pages/modules/assistencial/TransfusionalPage";
 import FarmaciaPage from "./pages/modules/assistencial/FarmaciaPage";
+import CCIHPage from "./pages/modules/assistencial/CCIHPage";
+import FisioterapiaPage from "./pages/modules/assistencial/FisioterapiaPage";
+import UTIPage from "./pages/modules/assistencial/UTIPage";
 
 // Módulos Gerenciais
 import FinanceiroPage from "./pages/modules/gerencial/FinanceiroPage";
@@ -56,14 +59,14 @@ const App = () => (
           <Route path="/assistencial/ambulatorio" element={<AmbulatorioPage />} />
           <Route path="/assistencial/agendas" element={<AgendasPage />} />
           <Route path="/assistencial/agencia-transfusional" element={<TransfusionalPage />} />
-          <Route path="/assistencial/ccih" element={<ModulePage title="CCIH" subtitle="Controle de Infecção Hospitalar" />} />
+          <Route path="/assistencial/ccih" element={<CCIHPage />} />
           <Route path="/assistencial/exames-imagem" element={<ImagemPage />} />
           <Route path="/assistencial/exames-lab" element={<LaboratorioPage />} />
           <Route path="/assistencial/farmacia" element={<FarmaciaPage />} />
-          <Route path="/assistencial/fisioterapia" element={<ModulePage title="Fisioterapia" subtitle="Análise de sessões e evolução" />} />
+          <Route path="/assistencial/fisioterapia" element={<FisioterapiaPage />} />
           <Route path="/assistencial/internacao" element={<InternacaoPage />} />
           <Route path="/assistencial/nutricao" element={<NutricaoPage />} />
-          <Route path="/assistencial/uti" element={<ModulePage title="UTI" subtitle="Unidade de Terapia Intensiva" />} />
+          <Route path="/assistencial/uti" element={<UTIPage />} />
           
           {/* Gerencial */}
           <Route path="/gerencial/estoque" element={<EstoquePage />} />

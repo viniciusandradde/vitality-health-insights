@@ -292,3 +292,77 @@ export interface SESMTTreinamento {
   participantes: number;
   centro_custo: string;
 }
+
+// CCIH
+export interface CCIHInfeccao {
+  id: string;
+  paciente_id: string;
+  paciente_nome: string;
+  data: string;
+  tipo_infeccao: string;
+  topografia: string;
+  isolamento: boolean;
+  antimicrobiano: string;
+  desfecho: 'alta' | 'obito' | 'em_tratamento';
+  sitio_cirurgico?: boolean;
+  iras?: boolean;
+}
+
+export interface CCIHIsolamento {
+  id: string;
+  paciente_id: string;
+  paciente_nome: string;
+  data_inicio: string;
+  data_fim?: string;
+  tipo_isolamento: 'precaucao_contato' | 'precaucao_goticulos' | 'precaucao_aerossol' | 'isolamento_total';
+  motivo: string;
+  dias_isolamento?: number;
+}
+
+// Fisioterapia
+export interface FisioterapiaSessao {
+  id: string;
+  paciente_id: string;
+  paciente_nome: string;
+  data: string;
+  tipo_tratamento: string;
+  fisioterapeuta: string;
+  evolucao: 'melhora' | 'estavel' | 'piora';
+  comparecimento: boolean;
+  duracao_minutos?: number;
+}
+
+export interface FisioterapiaPaciente {
+  id: string;
+  paciente_id: string;
+  paciente_nome: string;
+  data_inicio: string;
+  data_alta?: string;
+  tipo_tratamento: string;
+  status: 'em_tratamento' | 'alta' | 'transferido';
+  total_sessoes?: number;
+  dias_tratamento?: number;
+}
+
+// UTI
+export interface UTIInternacao {
+  id: string;
+  paciente_id: string;
+  paciente_nome: string;
+  data_internacao: string;
+  data_alta?: string;
+  apache_score?: number;
+  ventilacao_mecanica: boolean;
+  desfecho: 'alta' | 'obito' | 'transferencia' | 'em_internacao';
+  dias_permanencia?: number;
+  readmissao?: boolean;
+}
+
+export interface UTIVentilacao {
+  id: string;
+  paciente_id: string;
+  data_inicio: string;
+  data_fim?: string;
+  dias_ventilacao?: number;
+  tipo: 'invasiva' | 'nao_invasiva';
+}

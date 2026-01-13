@@ -7,10 +7,14 @@ export * from './permissions';
 // Assistencial
 export * from './assistencial/atendimentos';
 export * from './assistencial/ambulatorio';
+export * from './assistencial/agendas';
 export * from './assistencial/laboratorio';
 export * from './assistencial/imagem';
 export * from './assistencial/transfusional';
 export * from './assistencial/farmacia';
+export * from './assistencial/ccih';
+export * from './assistencial/fisioterapia';
+export * from './assistencial/uti';
 
 // Gerencial
 export * from './gerencial/nutricao';

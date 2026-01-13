@@ -3,8 +3,8 @@ import { ModuleLayout } from '@/components/layout/modules';
 import { KPIList, DataTable, ChartSection } from '@/components/modules';
 import { AMBULATORIO_FILTERS } from '@/types/filters';
 import type { AmbulatorioAgendamento, ModuleKPI, ChartData, TableColumn, FilterValues } from '@/types/modules';
-import { calculateAmbulatorioKPIs, calculateTaxaEncaixes } from '@/lib/business-rules';
-import { Calendar, Clock, TrendingUp, Users } from 'lucide-react';
+import { calculateAgendasKPIs, calculateTaxaEncaixes } from '@/lib/business-rules';
+import { Calendar, Clock, TrendingUp, Users, Activity, CheckCircle, XCircle } from 'lucide-react';
 
 // Reutiliza dados de ambulatório
 const mockAgendamentos: AmbulatorioAgendamento[] = [
@@ -98,8 +98,8 @@ export default function AgendasPage() {
     periodo: 'today',
   });
 
-  // Calcular KPIs
-  const kpisCalculados = calculateAmbulatorioKPIs(mockAgendamentos);
+  // Calcular KPIs expandidos
+  const kpisCalculados = calculateAgendasKPIs(mockAgendamentos);
   const taxaEncaixes = calculateTaxaEncaixes(mockAgendamentos);
 
   // KPIs formatados
@@ -120,6 +120,22 @@ export default function AgendasPage() {
       variant: 'default',
     },
     {
+      id: 'taxa_confirmacao',
+      title: 'Taxa de Confirmação',
+      value: `${kpisCalculados.taxaConfirmacao}%`,
+      icon: CheckCircle,
+      trend: { value: 2.1, label: 'vs semana' },
+      variant: 'success',
+    },
+    {
+      id: 'taxa_cancelamentos',
+      title: 'Taxa de Cancelamentos',
+      value: `${kpisCalculados.taxaCancelamentos}%`,
+      icon: XCircle,
+      trend: { value: -1.5, label: 'vs semana' },
+      variant: 'destructive',
+    },
+    {
       id: 'taxa_encaixes',
       title: 'Taxa de Encaixes',
       value: `${taxaEncaixes}%`,
@@ -133,6 +149,13 @@ export default function AgendasPage() {
       icon: Clock,
       trend: { value: -3.5, label: 'vs semana' },
       variant: 'success',
+    },
+    {
+      id: 'tempo_medio_agendamento',
+      title: 'Tempo Médio Agendamento',
+      value: `${kpisCalculados.tempoMedioAgendamento} dias`,
+      icon: Clock,
+      variant: 'default',
     },
   ];
 
@@ -256,6 +279,32 @@ export default function AgendasPage() {
     >
       {/* KPIs */}
       <KPIList kpis={kpis} columns={4} />
+
+      {/* Informações adicionais */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-lg border bg-card p-4">
+          <h3 className="mb-2 text-sm font-medium">Horários de Maior Demanda</h3>
+          <div className="space-y-1">
+            {kpisCalculados.horariosMaiorDemanda.map((hora, idx) => (
+              <div key={idx} className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{hora}</span>
+                <span className="font-medium">Agendamentos</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <h3 className="mb-2 text-sm font-medium">Distribuição por Especialidade</h3>
+          <div className="space-y-1">
+            {kpisCalculados.distribuicaoEspecialidade.slice(0, 5).map((item, idx) => (
+              <div key={idx} className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{item.especialidade}</span>
+                <span className="font-medium">{item.quantidade} agendamentos</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Gráficos */}
       <ChartSection charts={charts} columns={2} />

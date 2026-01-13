@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KPICard, ChartCard, GaugeChart } from '@/components/dashboard';
+import { KPICard, ChartCard, GaugeChart, TreeMapChart, SimplePieChart } from '@/components/dashboard';
 import { DataTable } from '@/components/modules';
 import {
   Select,
@@ -9,13 +9,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { BedDouble, Activity, Download } from 'lucide-react';
-import type { Leito, OcupacaoLeito, StatusOcupacao, TableColumn } from '@/types/dashboard';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { BedDouble, Activity, Download, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
+import type { Leito, OcupacaoLeito, StatusOcupacao, TableColumn, Internacao, KPICritico } from '@/types/dashboard';
 import {
   calculateOcupacaoPorCentroCusto,
   calculateTaxaOcupacaoGeralLeitos,
   calculateStatusOcupacao,
   calculateEvolucaoOcupacao,
+  calculateLeitoDiaPorCentroCusto,
+  calculateOcupacaoPorConvenioTop10,
+  calculateOcupacaoPorEspecialidadeTop10,
+  calculateKPIsCriticos,
 } from '@/lib/business-rules';
 import { SimpleAreaChart, SimpleBarChart } from '@/components/dashboard';
 
@@ -39,6 +44,66 @@ const mockLeitosCadastrados = [
   { centro_custo: 'UTI NEO-NATAL', total: 10 },
 ];
 
+// Mock de internações para cálculos
+const mockInternacoes: Internacao[] = [
+  {
+    id: '1',
+    paciente_id: 'P001',
+    paciente_nome: 'Maria Silva',
+    data_entrada: '2024-01-05',
+    centro_custo: 'ALA 1',
+    medico: 'Dr. João',
+    especialidade: 'Clínica Médica',
+    proveniencia: 'PS',
+    vinculado_ps: true,
+    obito: false,
+    convenio: 'Unimed',
+    dias_permanencia: 5,
+  },
+  {
+    id: '2',
+    paciente_id: 'P002',
+    paciente_nome: 'José Oliveira',
+    data_entrada: '2024-01-08',
+    centro_custo: 'ALA 1',
+    medico: 'Dr. Pedro',
+    especialidade: 'Cardiologia',
+    proveniencia: 'PS',
+    vinculado_ps: true,
+    obito: false,
+    convenio: 'SUS',
+    dias_permanencia: 2,
+  },
+  {
+    id: '3',
+    paciente_id: 'P003',
+    paciente_nome: 'Pedro Alves',
+    data_entrada: '2024-01-10',
+    centro_custo: 'ALA 2 - CLINICA CIRURGICA',
+    medico: 'Dr. Ana',
+    especialidade: 'Cirurgia Geral',
+    proveniencia: 'Ambulatório',
+    vinculado_ps: false,
+    obito: false,
+    convenio: 'Bradesco',
+    dias_permanencia: 3,
+  },
+  {
+    id: '4',
+    paciente_id: 'P004',
+    paciente_nome: 'Ana Costa',
+    data_entrada: '2024-01-12',
+    centro_custo: 'UTI',
+    medico: 'Dr. Carlos',
+    especialidade: 'UTI',
+    proveniencia: 'PS',
+    vinculado_ps: true,
+    obito: false,
+    convenio: 'Unimed',
+    dias_permanencia: 1,
+  },
+];
+
 export default function OcupacaoLeitosDashboard() {
   const [periodo, setPeriodo] = useState<'dia' | 'mes'>('mes');
   const [centroCustoSelecionado, setCentroCustoSelecionado] = useState<string>('all');
@@ -48,6 +113,21 @@ export default function OcupacaoLeitosDashboard() {
   const ocupacaoPorCC = calculateOcupacaoPorCentroCusto(mockLeitos, mockLeitosCadastrados);
   const statusOcupacao = calculateStatusOcupacao(mockLeitos);
   const evolucaoOcupacao = calculateEvolucaoOcupacao(mockLeitos, periodo, periodo === 'dia' ? 7 : 30);
+  const leitoDiaPorCentroCusto = calculateLeitoDiaPorCentroCusto(mockInternacoes, periodo);
+  const ocupacaoPorConvenio = calculateOcupacaoPorConvenioTop10(mockInternacoes);
+  const ocupacaoPorEspecialidade = calculateOcupacaoPorEspecialidadeTop10(mockInternacoes);
+  const kpisCriticos = calculateKPIsCriticos(mockLeitos, mockLeitosCadastrados);
+
+  // Dados para Pie Charts
+  const convenioPieData = ocupacaoPorConvenio.map((c) => ({
+    name: c.convenio,
+    value: c.percentual,
+  }));
+
+  const especialidadePieData = ocupacaoPorEspecialidade.map((e) => ({
+    name: e.especialidade,
+    value: e.percentual,
+  }));
 
   // KPIs principais
   const kpis = [
@@ -149,6 +229,41 @@ export default function OcupacaoLeitosDashboard() {
         ))}
       </div>
 
+      {/* Alertas de KPIs Críticos */}
+      <div className="mb-6 space-y-3">
+        {kpisCriticos.map((kpi) => {
+          const Icon =
+            kpi.status === 'ideal'
+              ? CheckCircle
+              : kpi.status === 'atencao'
+              ? AlertCircle
+              : AlertTriangle;
+          const variant = kpi.status === 'critico' ? 'destructive' : 'default';
+          const borderColor =
+            kpi.status === 'ideal'
+              ? 'border-emerald-500/50'
+              : kpi.status === 'atencao'
+              ? 'border-amber-500/50'
+              : 'border-destructive/50';
+
+          return (
+            <Alert key={kpi.id} variant={variant} className={borderColor}>
+              <Icon className="h-4 w-4" />
+              <AlertTitle>{kpi.titulo}</AlertTitle>
+              <AlertDescription>
+                <div className="flex items-center justify-between">
+                  <span>
+                    {kpi.mensagem} - Valor atual: <strong>{kpi.valor}%</strong>
+                    {kpi.ideal.min !== undefined && ` (Ideal: ≥${kpi.ideal.min}%)`}
+                    {kpi.ideal.max !== undefined && ` (Ideal: ≤${kpi.ideal.max}%)`}
+                  </span>
+                </div>
+              </AlertDescription>
+            </Alert>
+          );
+        })}
+      </div>
+
       {/* Gauge de Ocupação Geral */}
       <div className="mb-6">
         <ChartCard title="Taxa de Ocupação Geral" description="Indicador visual de ocupação">
@@ -216,6 +331,33 @@ export default function OcupacaoLeitosDashboard() {
             searchPlaceholder="Buscar por centro de custo..."
             pagination={{ pageSize: 10, showPagination: true }}
           />
+        </ChartCard>
+      </div>
+
+      {/* TreeMap - Leito Dia por Centro de Custo */}
+      <div className="mb-6">
+        <ChartCard
+          title="Leito Dia por Centro de Custo"
+          description="Distribuição hierárquica de leitos-dia por centro de custo"
+        >
+          <TreeMapChart data={leitoDiaPorCentroCusto} height={400} />
+        </ChartCard>
+      </div>
+
+      {/* Pie Charts - Ocupação por Convênio e Especialidade */}
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ChartCard
+          title="Ocupação por Convênio"
+          description="Top 10 convênios"
+        >
+          <SimplePieChart data={convenioPieData} height={300} />
+        </ChartCard>
+
+        <ChartCard
+          title="Ocupação por Especialidade"
+          description="Top 10 especialidades"
+        >
+          <SimplePieChart data={especialidadePieData} height={300} />
         </ChartCard>
       </div>
     </>

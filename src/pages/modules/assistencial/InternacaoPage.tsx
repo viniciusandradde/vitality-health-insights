@@ -1,9 +1,18 @@
 import { useState } from 'react';
 import { ModuleLayout } from '@/components/layout/modules';
 import { KPIList, DataTable, ChartSection } from '@/components/modules';
+import { ChartCard, DonutChart, SimplePieChart } from '@/components/dashboard';
 import { COMMON_FILTERS } from '@/types/filters';
 import type { Internacao, ModuleKPI, ChartData, TableColumn, FilterValues } from '@/types/modules';
-import { BedDouble, Activity, TrendingDown, Users } from 'lucide-react';
+import type { Leito } from '@/types/dashboard';
+import {
+  calculateLeitosOperacionais,
+  calculateTipoLeito,
+  calculateLeitosPorSetor,
+  calculateOcupacaoPorConvenioTop10,
+  calculateOcupacaoPorEspecialidadeTop10,
+} from '@/lib/business-rules';
+import { BedDouble, Activity, TrendingDown, Users, Building2, CreditCard, Stethoscope } from 'lucide-react';
 
 // Dados mock inline
 const mockInternacoes: Internacao[] = [
@@ -18,6 +27,8 @@ const mockInternacoes: Internacao[] = [
     diagnostico: 'Pneumonia',
     status: 'internado',
     dias_internacao: 5,
+    convenio: 'Unimed',
+    especialidade: 'Clínica Médica',
   },
   {
     id: '2',
@@ -30,6 +41,8 @@ const mockInternacoes: Internacao[] = [
     diagnostico: 'Hipertensão',
     status: 'internado',
     dias_internacao: 2,
+    convenio: 'SUS',
+    especialidade: 'Cardiologia',
   },
   {
     id: '3',
@@ -43,7 +56,49 @@ const mockInternacoes: Internacao[] = [
     diagnostico: 'Pós-operatório',
     status: 'alta_medica',
     dias_internacao: 7,
+    convenio: 'Bradesco',
+    especialidade: 'Cirurgia Geral',
   },
+  {
+    id: '4',
+    paciente_id: 'P004',
+    paciente_nome: 'Ana Costa',
+    data_internacao: '2024-01-10',
+    leito: '102-A',
+    setor: 'Enfermaria A',
+    tipo: 'enfermaria',
+    diagnostico: 'Diabetes',
+    status: 'internado',
+    dias_internacao: 3,
+    convenio: 'Unimed',
+    especialidade: 'Endocrinologia',
+  },
+  {
+    id: '5',
+    paciente_id: 'P005',
+    paciente_nome: 'Carlos Santos',
+    data_internacao: '2024-01-12',
+    leito: '202-B',
+    setor: 'Enfermaria B',
+    tipo: 'enfermaria',
+    diagnostico: 'Fraturas',
+    status: 'internado',
+    dias_internacao: 1,
+    convenio: 'SUS',
+    especialidade: 'Ortopedia',
+  },
+];
+
+// Mock de leitos para cálculos
+const mockLeitos: Leito[] = [
+  { id: '1', numero: '101-A', centro_custo: 'Enfermaria A', tipo: 'enfermaria', status: 'ocupado', paciente_id: 'P001' },
+  { id: '2', numero: '102-A', centro_custo: 'Enfermaria A', tipo: 'enfermaria', status: 'ocupado', paciente_id: 'P004' },
+  { id: '3', numero: '103-A', centro_custo: 'Enfermaria A', tipo: 'enfermaria', status: 'disponivel' },
+  { id: '4', numero: '201-B', centro_custo: 'Enfermaria B', tipo: 'enfermaria', status: 'ocupado', paciente_id: 'P002' },
+  { id: '5', numero: '202-B', centro_custo: 'Enfermaria B', tipo: 'enfermaria', status: 'ocupado', paciente_id: 'P005' },
+  { id: '6', numero: '301-A', centro_custo: 'UTI', tipo: 'uti', status: 'disponivel' },
+  { id: '7', numero: '302-A', centro_custo: 'UTI', tipo: 'uti', status: 'ocupado' },
+  { id: '8', numero: '401-A', centro_custo: 'Apartamento', tipo: 'outro', status: 'ocupado' },
 ];
 
 const mockOcupacaoPorSetor: ChartData[] = [
@@ -67,19 +122,75 @@ export default function InternacaoPage() {
   const [filterValues, setFilterValues] = useState<FilterValues>({
     periodo: 'today',
   });
+  const [setorSelecionado, setSetorSelecionado] = useState<string | null>(null);
+
+  // Calcular métricas operacionais
+  const leitosOperacionais = calculateLeitosOperacionais(mockLeitos, mockInternacoes);
+  const tipoLeito = calculateTipoLeito(mockLeitos);
+  const leitosPorSetor = calculateLeitosPorSetor(mockLeitos, mockInternacoes);
+  const ocupacaoPorConvenio = calculateOcupacaoPorConvenioTop10(mockInternacoes);
+  const ocupacaoPorEspecialidade = calculateOcupacaoPorEspecialidadeTop10(mockInternacoes);
 
   const leitosOcupados = mockInternacoes.filter((i) => i.status === 'internado').length;
-  const totalLeitos = 180;
-  const taxaOcupacao = Math.round((leitosOcupados / totalLeitos) * 100);
+  const totalLeitos = mockLeitos.length;
+  const taxaOcupacao = totalLeitos > 0 ? Math.round((leitosOcupados / totalLeitos) * 100) : 0;
   const tempoMedio = 4.2;
+
+  // Dados para Donut Chart
+  const donutData = [
+    { name: 'Ocupado', value: leitosOperacionais.ocupado, color: 'hsl(0, 72%, 50%)' },
+    { name: 'Livre', value: leitosOperacionais.livre, color: 'hsl(142, 76%, 36%)' },
+  ];
+  const percentualOcupado = totalLeitos > 0
+    ? Number(((leitosOperacionais.ocupado / totalLeitos) * 100).toFixed(2))
+    : 0;
+
+  // Dados para Pie Chart - Tipo de Leito
+  const tipoLeitoPieData = tipoLeito.map((t) => ({
+    name: t.tipo,
+    value: t.percentual,
+  }));
+
+  // Dados para Pie Chart - Ocupação por Convênio
+  const convenioPieData = ocupacaoPorConvenio.map((c) => ({
+    name: c.convenio,
+    value: c.percentual,
+  }));
+
+  // Dados para Pie Chart - Ocupação por Especialidade
+  const especialidadePieData = ocupacaoPorEspecialidade.map((e) => ({
+    name: e.especialidade,
+    value: e.percentual,
+  }));
 
   const kpis: ModuleKPI[] = [
     {
-      id: 'leitos_ocupados',
-      title: 'Leitos Ocupados',
-      value: `${leitosOcupados} / ${totalLeitos}`,
+      id: 'convenio',
+      title: 'Convênio',
+      value: leitosOperacionais.convenio,
+      icon: CreditCard,
+      variant: 'default',
+    },
+    {
+      id: 'sus',
+      title: 'SUS',
+      value: leitosOperacionais.sus,
+      icon: Building2,
+      variant: 'default',
+    },
+    {
+      id: 'ocupado',
+      title: 'Ocupado',
+      value: leitosOperacionais.ocupado,
       icon: BedDouble,
       variant: 'default',
+    },
+    {
+      id: 'livre',
+      title: 'Livre',
+      value: leitosOperacionais.livre,
+      icon: Users,
+      variant: 'success',
     },
     {
       id: 'taxa_ocupacao',
@@ -87,14 +198,7 @@ export default function InternacaoPage() {
       value: `${taxaOcupacao}%`,
       icon: Activity,
       trend: { value: 2.5, label: 'vs ontem' },
-      variant: taxaOcupacao > 85 ? 'warning' : 'default',
-    },
-    {
-      id: 'leitos_disponiveis',
-      title: 'Leitos Disponíveis',
-      value: totalLeitos - leitosOcupados,
-      icon: Users,
-      variant: 'success',
+      variant: taxaOcupacao > 85 ? 'warning' : taxaOcupacao < 75 ? 'warning' : 'default',
     },
     {
       id: 'tempo_medio',
@@ -153,6 +257,14 @@ export default function InternacaoPage() {
     },
   ];
 
+  // Colunas para tabela de leitos por setor
+  const columnsLeitosPorSetor: TableColumn[] = [
+    { id: 'setor', label: 'Setor', accessor: 'setor', sortable: true },
+    { id: 'livre', label: 'Livre', accessor: 'livre', sortable: true },
+    { id: 'ocupado', label: 'Ocupado', accessor: 'ocupado', sortable: true },
+    { id: 'total', label: 'Total', accessor: 'total', sortable: true },
+  ];
+
   const charts = [
     {
       id: 'ocupacao_setor',
@@ -175,6 +287,10 @@ export default function InternacaoPage() {
     },
   ];
 
+  const handleSetorClick = (row: typeof leitosPorSetor[0]) => {
+    setSetorSelecionado(setorSelecionado === row.setor ? null : row.setor);
+  };
+
   return (
     <ModuleLayout
       title="Internação"
@@ -183,8 +299,72 @@ export default function InternacaoPage() {
       filterValues={filterValues}
       onFilterChange={setFilterValues}
     >
-      <KPIList kpis={kpis} columns={4} />
+      {/* Cards Principais */}
+      <KPIList kpis={kpis} columns={6} />
+
+      {/* Donut Chart - Taxa de Ocupação */}
+      <div className="mb-6">
+        <ChartCard
+          title="Taxa de Ocupação"
+          description={`${percentualOcupado}% ocupado vs ${(100 - percentualOcupado).toFixed(2)}% livre`}
+        >
+          <DonutChart
+            data={donutData}
+            height={300}
+            centerLabel={`${percentualOcupado}%`}
+            showLegend={true}
+          />
+        </ChartCard>
+      </div>
+
+      {/* Gráficos Row 1: Tipo de Leito e Ocupação por Convênio */}
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ChartCard
+          title="Tipo de Leito"
+          description="Distribuição por tipo de leito"
+        >
+          <SimplePieChart data={tipoLeitoPieData} height={250} />
+        </ChartCard>
+
+        <ChartCard
+          title="Ocupação por Convênio"
+          description="Top 10 convênios"
+        >
+          <SimplePieChart data={convenioPieData} height={250} />
+        </ChartCard>
+      </div>
+
+      {/* Tabela Interativa - Leitos por Setor */}
+      <div className="mb-6">
+        <ChartCard
+          title="Leitos por Setor"
+          description="Clique na linha para ver detalhes"
+        >
+          <DataTable
+            columns={columnsLeitosPorSetor}
+            data={leitosPorSetor}
+            searchable={true}
+            searchPlaceholder="Buscar por setor..."
+            pagination={{ pageSize: 10, showPagination: true }}
+            onRowClick={handleSetorClick}
+          />
+        </ChartCard>
+      </div>
+
+      {/* Gráfico - Ocupação por Especialidade */}
+      <div className="mb-6">
+        <ChartCard
+          title="Ocupação por Especialidade"
+          description="Top 10 especialidades"
+        >
+          <SimplePieChart data={especialidadePieData} height={300} />
+        </ChartCard>
+      </div>
+
+      {/* Gráficos existentes */}
       <ChartSection charts={charts} columns={2} />
+
+      {/* Tabela de Internações */}
       <DataTable columns={columns} data={mockInternacoes} searchable pagination={{ pageSize: 10 }} />
     </ModuleLayout>
   );

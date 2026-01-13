@@ -29,3 +29,4 @@ export * from './gerencial/sesmt';
 export * from './dashboard/internacoes';
 export * from './dashboard/ocupacao';
 export * from './dashboard/atendimentos';
+export * from './dashboard/leitos-operacionais';

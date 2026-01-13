@@ -97,6 +97,8 @@ export interface Internacao {
   diagnostico: string;
   status: 'internado' | 'alta_medica' | 'alta_pedida' | 'obito' | 'transferencia';
   dias_internacao?: number;
+  convenio?: string;
+  especialidade?: string;
 }
 
 export interface FinanceiroTransacao {

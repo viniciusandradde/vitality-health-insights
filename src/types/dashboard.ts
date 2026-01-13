@@ -130,3 +130,51 @@ export interface DashboardFilter {
   data_inicio?: string;
   data_fim?: string;
 }
+
+// Tipos para gestão operacional de leitos
+export interface LeitoOperacional {
+  convenio: number;
+  sus: number;
+  ocupado: number;
+  livre: number;
+}
+
+export interface TipoLeito {
+  tipo: 'ENF' | 'UTI' | 'APT' | 'outro';
+  quantidade: number;
+  percentual: number;
+}
+
+export interface LeitoPorSetor {
+  setor: string;
+  livre: number;
+  ocupado: number;
+  total: number;
+}
+
+export interface OcupacaoConvenio {
+  convenio: string;
+  quantidade: number;
+  percentual: number;
+}
+
+export interface OcupacaoEspecialidade {
+  especialidade: string;
+  quantidade: number;
+  percentual: number;
+}
+
+export interface TreeMapData {
+  name: string;
+  value: number;
+  children?: TreeMapData[];
+}
+
+export interface KPICritico {
+  id: string;
+  titulo: string;
+  valor: number;
+  ideal: { min?: number; max?: number };
+  status: 'ideal' | 'atencao' | 'critico';
+  mensagem?: string;
+}

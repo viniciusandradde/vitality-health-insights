@@ -13,7 +13,6 @@ import {
   Users,
   ShieldCheck,
   HeartPulse,
-  ClipboardList,
   BedDouble,
   UtensilsCrossed,
   Dumbbell,
@@ -144,11 +143,6 @@ export const navigationConfig: NavSection[] = [
         path: '/gerencial/lavanderia',
         icon: Shirt,
         description: 'Gestão de roupas',
-      },
-      {
-        label: 'Relatórios',
-        path: '/gerencial/relatorios',
-        icon: ClipboardList,
       },
       {
         label: 'SESMT',

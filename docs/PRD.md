@@ -131,41 +131,74 @@ Plataforma centralizada que:
 
 ## 4. Funcionalidades e Requisitos
 
-### 4.1 Epic 1: Sistema de Autenticação Multi-Tenant
+### 4.1 Epic 1: Sistema de Autenticação Multi-Tenant (Keycloak)
+Visão Arquitetural
+Usuário
+  ↓
+Keycloak (Auth / MFA / RBAC)
+  ↓ JWT (tenant_id, roles)
+Backend API (FastAPI / Node)
+  ↓
+PostgreSQL (RLS por tenant)
 
-#### User Stories
 
-| ID | Como | Quero | Para |
-|----|------|-------|------|
-| US-1.1 | Administrador de Hospital | Criar conta para meu hospital | Começar a usar a plataforma |
-| US-1.2 | Usuário | Fazer login com email e senha | Acessar o sistema de forma segura |
-| US-1.3 | Administrador | Convidar membros da equipe | Dar acesso controlado ao sistema |
-| US-1.4 | Master | Definir roles para cada usuário | Controlar permissões de acesso |
-| US-1.5 | Usuário | Recuperar minha senha | Voltar a acessar o sistema |
-| US-1.6 | Administrador | Ver log de acessos | Auditar uso do sistema |
+Keycloak é a autoridade de identidade
 
-#### Critérios de Aceitação (US-1.1)
+PostgreSQL não gerencia login
 
-```gherkin
+Backend valida JWT e aplica contexto de tenant
+
+User Stories
+ID	Como	Quero	Para
+US-1.1	Administrador de Hospital	Criar conta para meu hospital	Iniciar uso da plataforma
+US-1.2	Usuário	Fazer login seguro	Acessar dashboards
+US-1.3	Administrador	Convidar membros da equipe	Delegar acessos
+US-1.4	Master	Definir roles e permissões	Controlar acessos
+US-1.5	Usuário	Recuperar senha	Reacessar sistema
+US-1.6	Administrador	Auditar acessos	Compliance e segurança
+Critérios de Aceitação (US-1.1)
 Scenario: Cadastro de novo hospital
   Given que estou na página de signup
-  When preencho nome do hospital "Hospital Santa Clara"
-  And preencho email "admin@santaclara.com.br"
-  And preencho senha válida
-  And preencho subdomain "santaclara"
-  And clico em "Criar Conta"
-  Then devo receber email de confirmação
-  And meu hospital deve ter status "trial"
-  And devo ter período de trial de 14 dias
+  When informo dados do hospital
+  And crio usuário administrador
+  Then o tenant deve ser criado no backend
+  And o usuário deve ser provisionado no Keycloak
+  And recebo email de ativação
+  And o tenant inicia em modo "trial" por 14 dias
+
 ```
 
 #### Requisitos Técnicos
 
-- **RT-1.1**: Autenticação via Supabase Auth
-- **RT-1.2**: JWT com claim `tenant_id` para RLS
-- **RT-1.3**: Roles armazenados em tabela separada (nunca no profile)
-- **RT-1.4**: Sessões com expiração configurável
-- **RT-1.5**: Rate limiting em tentativas de login
+ID	Requisito
+RT-1.1	Autenticação centralizada via Keycloak (OIDC / OAuth2)
+RT-1.2	JWT emitido pelo Keycloak contendo claims: tenant_id, roles, email
+RT-1.3	RBAC gerenciado exclusivamente no Keycloak
+RT-1.4	Backend valida JWT e injeta tenant_id no contexto
+RT-1.5	PostgreSQL usa Row Level Security (RLS) baseado em tenant_id
+RT-1.6	MFA opcional por tenant
+RT-1.7	Logs de autenticação e auditoria no Keycloak
+RT-1.8	Refresh tokens com rotação segura
+RT-1.9	Rate limiting aplicado no backend
+RT-1.10	Suporte a SSO corporativo (futuro)
+
+Modelo de Tenancy (Autenticação)
+
+Realm único
+
+Cada hospital = tenant_id
+
+Roles:
+
+master_admin
+
+tenant_admin
+
+manager
+
+analyst
+
+viewer
 
 ### 4.2 Epic 2: Dashboard Principal
 
@@ -256,13 +289,14 @@ Scenario: Cadastro de novo hospital
 ### 5.2 Segurança
 
 | Requisito | Especificação |
-|-----------|---------------|
-| Criptografia em trânsito | TLS 1.3 |
-| Criptografia em repouso | AES-256 |
-| Autenticação | JWT com refresh tokens |
-| Autorização | RBAC + RLS |
-| Auditoria | Log de todas ações críticas |
-| Compliance | LGPD, HIPAA-ready |
+Requisito	Especificação
+Autenticação	Keycloak + OpenID Connect
+Tokens	JWT RS256
+MFA	Opcional por tenant
+Autorização	RBAC (Keycloak) + RLS (PostgreSQL)
+Auditoria	Login, logout, permissões, acessos
+Compliance	LGPD, HIPAA-ready
+Isolamento	Multi-tenant lógico e criptográfico
 
 ### 5.3 Disponibilidade
 
@@ -391,11 +425,14 @@ Indica adoção real e valor entregue.
 
 | Dependência | Tipo | Criticidade | Alternativa |
 |-------------|------|-------------|-------------|
-| Supabase | Infraestrutura | Alta | AWS/GCP direto |
-| Stripe | Pagamentos | Alta | PagSeguro, Mercado Pago |
-| Wareline | Integração | Alta | API genérica |
-| Resend | Email | Média | SendGrid, SES |
-| Twilio | SMS/WhatsApp | Média | Zenvia |
+Dependência	Tipo	Criticidade	Alternativa
+Keycloak	Autenticação	Crítica	Auth0
+PostgreSQL	Banco	Crítica	Aurora, Cloud SQL
+Backend API	Core	Crítica	—
+Stripe	Pagamentos	Alta	Mercado Pago
+Wareline	Integração	Alta	API genérica
+Resend	Email	Média	SES
+Twilio	WhatsApp	Média	Zenvia
 
 ---
 
@@ -410,6 +447,12 @@ Indica adoção real e valor entregue.
 | AIH | Autorização de Internação Hospitalar (SUS) |
 | TAT | Turnaround Time - tempo de resposta |
 | CCIH | Comissão de Controle de Infecção Hospitalar |
+Keycloak	Identity Provider Open Source
+Realm	Domínio lógico de autenticação
+RBAC	Role-Based Access Control
+RLS	Isolamento de dados no PostgreSQL
+Tenant	Hospital/cliente
+JWT	Token de autenticação
 
 ---
 

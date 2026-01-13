@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Menu, X, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,10 +8,40 @@ import { useSidebarStore } from '@/stores/sidebarStore';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+// Função helper para detectar seções ativas baseadas na rota atual
+const getActiveSections = (pathname: string): string[] => {
+  const active: string[] = [];
+  navigationConfig.forEach((section) => {
+    if (section.submenu) {
+      const hasActiveRoute = section.submenu.some((item) => 
+        pathname.startsWith(item.path)
+      );
+      if (hasActiveRoute) {
+        active.push(section.label);
+      }
+    }
+  });
+  return active;
+};
+
 export function AppSidebar() {
   const location = useLocation();
   const { isOpen, toggle } = useSidebarStore();
-  const [expandedSections, setExpandedSections] = useState<string[]>(['Assistencial']);
+  
+  // Inicializar estado baseado na rota atual
+  const [expandedSections, setExpandedSections] = useState<string[]>(() => 
+    getActiveSections(location.pathname)
+  );
+
+  // Atualizar quando a rota mudar
+  useEffect(() => {
+    const activeSections = getActiveSections(location.pathname);
+    setExpandedSections((prev) => {
+      // Manter seções que o usuário expandiu manualmente, mas garantir que seções ativas estejam abertas
+      const newSections = [...new Set([...prev, ...activeSections])];
+      return newSections;
+    });
+  }, [location.pathname]);
 
   const toggleSection = (label: string) => {
     setExpandedSections((prev) =>

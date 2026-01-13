@@ -13,6 +13,7 @@ import {
   Cell,
   AreaChart,
   Area,
+  Legend,
 } from 'recharts';
 
 const COLORS = [
@@ -135,6 +136,22 @@ interface PieChartData {
 }
 
 export function SimplePieChart({ data, height = 200 }: { data: PieChartData[]; height?: number }) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  // Formatação padronizada do tooltip
+  const formatTooltip = (value: number, name: string) => {
+    const percent = total > 0 ? ((value / total) * 100).toFixed(2) : '0';
+    return [`${name}: ${value} (${percent}%)`, ''];
+  };
+
+  // Formatação padronizada da legenda
+  const formatLegend = (value: string) => {
+    const item = data.find((d) => d.name === value);
+    if (!item) return value;
+    const percent = total > 0 ? ((item.value / total) * 100).toFixed(2) : '0';
+    return `${value}: ${item.value} (${percent}%)`;
+  };
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <PieChart>
@@ -156,6 +173,17 @@ export function SimplePieChart({ data, height = 200 }: { data: PieChartData[]; h
             backgroundColor: 'hsl(var(--card))',
             border: '1px solid hsl(var(--border))',
             borderRadius: '8px',
+            padding: '8px 12px',
+          }}
+          formatter={formatTooltip}
+        />
+        <Legend
+          verticalAlign="bottom"
+          height={50}
+          iconType="circle"
+          formatter={formatLegend}
+          wrapperStyle={{
+            paddingTop: '16px',
           }}
         />
       </PieChart>

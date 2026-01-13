@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KPICard, ChartCard, GaugeChart, TreeMapChart, SimplePieChart } from '@/components/dashboard';
+import { KPICard, ChartCard, GaugeChart, TreeMapChart, SimplePieChart, DonutChart } from '@/components/dashboard';
 import { DataTable } from '@/components/modules';
 import {
   Select,
@@ -131,6 +131,17 @@ export default function OcupacaoLeitosDashboard() {
 
   // Total de leitos cadastrados
   const totalLeitos = mockLeitosCadastrados.reduce((sum, l) => sum + l.total, 0);
+
+  // Dados para Donut Chart - Taxa de Ocupação
+  const totalLeitosDisponiveis = mockLeitos.filter((l) => l.status === 'disponivel').length;
+  const totalLeitosOcupados = mockLeitos.filter((l) => l.status === 'ocupado' || l.status === 'reservado').length;
+  const donutOcupacaoData = [
+    { name: 'Ocupado', value: totalLeitosOcupados, color: 'hsl(0, 72%, 50%)' },
+    { name: 'Livre', value: totalLeitosDisponiveis, color: 'hsl(142, 76%, 36%)' },
+  ];
+  const percentualOcupacaoGeral = totalLeitos > 0
+    ? Number(((totalLeitosOcupados / totalLeitos) * 100).toFixed(2))
+    : 0;
 
   // Dados para Pie Charts
   const convenioPieData = ocupacaoPorConvenio.map((c) => ({
@@ -290,12 +301,19 @@ export default function OcupacaoLeitosDashboard() {
         })}
       </div>
 
-      {/* Gauge de Ocupação Geral */}
+      {/* Donut Chart - Taxa de Ocupação Geral */}
       <div className="mb-6">
-        <ChartCard title="Taxa de Ocupação Geral" description="Indicador visual de ocupação">
-          <div className="flex items-center justify-center py-8">
-            <GaugeChart value={taxaOcupacaoGeral} label="Ocupação" size="lg" />
-          </div>
+        <ChartCard title="Taxa de Ocupação Geral" description="Distribuição de leitos ocupados e livres">
+          <DonutChart
+            data={donutOcupacaoData}
+            height={300}
+            centerTitle="Ocupação"
+            centerLabel={`${percentualOcupacaoGeral}%`}
+            centerSubtitle={`${totalLeitosOcupados} de ${totalLeitos} leitos`}
+            showLegend={true}
+            showSegmentLabels={true}
+            legendFormat="detailed"
+          />
         </ChartCard>
       </div>
 

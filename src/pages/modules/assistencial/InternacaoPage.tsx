@@ -355,13 +355,17 @@ export default function InternacaoPage() {
       <div className="mb-6">
         <ChartCard
           title="Taxa de Ocupação"
-          description={`${percentualOcupado}% ocupado vs ${(100 - percentualOcupado).toFixed(2)}% livre`}
+          description="Distribuição de leitos ocupados e livres"
         >
           <DonutChart
             data={donutData}
             height={300}
+            centerTitle="Ocupação"
             centerLabel={`${percentualOcupado}%`}
+            centerSubtitle={`${leitosOperacionais.ocupado} de ${totalLeitos} leitos`}
             showLegend={true}
+            showSegmentLabels={true}
+            legendFormat="detailed"
           />
         </ChartCard>
       </div>

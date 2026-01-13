@@ -24,3 +24,8 @@ export * from './gerencial/hotelaria';
 export * from './gerencial/spp';
 export * from './gerencial/ti';
 export * from './gerencial/sesmt';
+
+// Dashboard
+export * from './dashboard/internacoes';
+export * from './dashboard/ocupacao';
+export * from './dashboard/atendimentos';

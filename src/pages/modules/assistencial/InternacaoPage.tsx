@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { ModuleLayout } from '@/components/layout/modules';
 import { KPIList, DataTable, ChartSection } from '@/components/modules';
-import { ChartCard, DonutChart, SimplePieChart } from '@/components/dashboard';
+import { ChartCard, DonutChart, SimplePieChart, KPICard } from '@/components/dashboard';
 import { COMMON_FILTERS } from '@/types/filters';
-import type { Internacao, ModuleKPI, ChartData, TableColumn, FilterValues } from '@/types/modules';
-import type { Leito } from '@/types/dashboard';
+import type { Internacao as InternacaoModule, ModuleKPI, ChartData, TableColumn } from '@/types/modules';
+import type { FilterValues } from '@/types/filters';
+import type { Leito, Internacao } from '@/types/dashboard';
 import {
   calculateLeitosOperacionais,
   calculateTipoLeito,
@@ -12,10 +13,10 @@ import {
   calculateOcupacaoPorConvenioTop10,
   calculateOcupacaoPorEspecialidadeTop10,
 } from '@/lib/business-rules';
-import { BedDouble, Activity, TrendingDown, Users, Building2, CreditCard, Stethoscope } from 'lucide-react';
+import { BedDouble, Activity, TrendingDown, Users, Building2, CreditCard, Stethoscope, Calendar, Hospital } from 'lucide-react';
 
 // Dados mock inline
-const mockInternacoes: Internacao[] = [
+const mockInternacoesModule: InternacaoModule[] = [
   {
     id: '1',
     paciente_id: 'P001',
@@ -101,6 +102,16 @@ const mockLeitos: Leito[] = [
   { id: '8', numero: '401-A', centro_custo: 'Apartamento', tipo: 'outro', status: 'ocupado' },
 ];
 
+// Mock de leitos cadastrados para cálculo do total
+const mockLeitosCadastrados = [
+  { centro_custo: 'Enfermaria A', total: 30 },
+  { centro_custo: 'Enfermaria B', total: 22 },
+  { centro_custo: 'Enfermaria C', total: 20 },
+  { centro_custo: 'UTI', total: 17 },
+  { centro_custo: 'UTI NEO-NATAL', total: 15 },
+  { centro_custo: 'Apartamento', total: 23 },
+];
+
 const mockOcupacaoPorSetor: ChartData[] = [
   { setor: 'UTI', ocupados: 28, total: 30, percentual: 93 },
   { setor: 'Enfermaria A', ocupados: 45, total: 50, percentual: 90 },
@@ -124,6 +135,23 @@ export default function InternacaoPage() {
   });
   const [setorSelecionado, setSetorSelecionado] = useState<string | null>(null);
 
+  // Converter Internacao de modules para dashboard
+  const mockInternacoes: Internacao[] = mockInternacoesModule.map((i) => ({
+    id: i.id,
+    paciente_id: i.paciente_id,
+    paciente_nome: i.paciente_nome,
+    data_entrada: i.data_internacao,
+    data_saida: i.data_alta,
+    centro_custo: i.setor,
+    medico: 'Dr. Médico', // Mock
+    especialidade: i.especialidade || 'Clínica Geral',
+    proveniencia: 'Internação',
+    vinculado_ps: false,
+    obito: i.status === 'obito',
+    dias_permanencia: i.dias_internacao,
+    convenio: i.convenio,
+  }));
+
   // Calcular métricas operacionais
   const leitosOperacionais = calculateLeitosOperacionais(mockLeitos, mockInternacoes);
   const tipoLeito = calculateTipoLeito(mockLeitos);
@@ -131,10 +159,20 @@ export default function InternacaoPage() {
   const ocupacaoPorConvenio = calculateOcupacaoPorConvenioTop10(mockInternacoes);
   const ocupacaoPorEspecialidade = calculateOcupacaoPorEspecialidadeTop10(mockInternacoes);
 
-  const leitosOcupados = mockInternacoes.filter((i) => i.status === 'internado').length;
-  const totalLeitos = mockLeitos.length;
+  const leitosOcupados = mockInternacoesModule.filter((i) => i.status === 'internado').length;
+  const totalLeitos = mockLeitosCadastrados.reduce((sum, l) => sum + l.total, 0);
   const taxaOcupacao = totalLeitos > 0 ? Math.round((leitosOcupados / totalLeitos) * 100) : 0;
   const tempoMedio = 4.2;
+
+  // Calcular Leitos dia sim (Leito-Dia)
+  // Cada paciente internado hoje conta como 1 leito-dia
+  const hoje = new Date().toISOString().split('T')[0];
+  const leitosDiaSim = mockInternacoesModule.filter((i) => {
+    const dataInternacao = new Date(i.data_internacao).toISOString().split('T')[0];
+    const dataAlta = i.data_alta ? new Date(i.data_alta).toISOString().split('T')[0] : null;
+    // Paciente está internado hoje se: entrou hoje ou antes, e não teve alta ou alta é depois de hoje
+    return i.status === 'internado' && dataInternacao <= hoje && (!dataAlta || dataAlta >= hoje);
+  }).length;
 
   // Dados para Donut Chart
   const donutData = [
@@ -163,10 +201,11 @@ export default function InternacaoPage() {
     value: e.percentual,
   }));
 
+  // Cards KPIs ordenados conforme a imagem: Convênio, SUS, Ocupado, Livre, Leitos dia sim, Total de Leitos
   const kpis: ModuleKPI[] = [
     {
       id: 'convenio',
-      title: 'Convênio',
+      title: 'Convênio e Particulares',
       value: leitosOperacionais.convenio,
       icon: CreditCard,
       variant: 'default',
@@ -183,7 +222,7 @@ export default function InternacaoPage() {
       title: 'Ocupado',
       value: leitosOperacionais.ocupado,
       icon: BedDouble,
-      variant: 'default',
+      variant: leitosOperacionais.ocupado > totalLeitos * 0.85 ? 'warning' : 'default',
     },
     {
       id: 'livre',
@@ -193,20 +232,18 @@ export default function InternacaoPage() {
       variant: 'success',
     },
     {
-      id: 'taxa_ocupacao',
-      title: 'Taxa de Ocupação',
-      value: `${taxaOcupacao}%`,
-      icon: Activity,
-      trend: { value: 2.5, label: 'vs ontem' },
-      variant: taxaOcupacao > 85 ? 'warning' : taxaOcupacao < 75 ? 'warning' : 'default',
+      id: 'leitos_dia_sim',
+      title: 'Leitos dia sim',
+      value: leitosDiaSim,
+      icon: Calendar,
+      variant: 'default',
     },
     {
-      id: 'tempo_medio',
-      title: 'Tempo Médio de Permanência',
-      value: `${tempoMedio} dias`,
-      icon: TrendingDown,
-      trend: { value: -0.3, label: 'vs semana' },
-      variant: 'success',
+      id: 'total_leitos',
+      title: 'Total de Leitos',
+      value: totalLeitos,
+      icon: Hospital,
+      variant: 'default',
     },
   ];
 
@@ -299,8 +336,20 @@ export default function InternacaoPage() {
       filterValues={filterValues}
       onFilterChange={setFilterValues}
     >
-      {/* Cards Principais */}
-      <KPIList kpis={kpis} columns={6} />
+      {/* Cards Principais - 6 cards em 2 linhas responsivas */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {kpis.map((kpi) => (
+          <KPICard
+            key={kpi.id}
+            title={kpi.title}
+            value={kpi.value}
+            icon={kpi.icon}
+            trend={kpi.trend}
+            variant={kpi.variant}
+            description={kpi.description}
+          />
+        ))}
+      </div>
 
       {/* Donut Chart - Taxa de Ocupação */}
       <div className="mb-6">
@@ -365,7 +414,7 @@ export default function InternacaoPage() {
       <ChartSection charts={charts} columns={2} />
 
       {/* Tabela de Internações */}
-      <DataTable columns={columns} data={mockInternacoes} searchable pagination={{ pageSize: 10 }} />
+      <DataTable columns={columns} data={mockInternacoesModule} searchable pagination={{ pageSize: 10 }} />
     </ModuleLayout>
   );
 }

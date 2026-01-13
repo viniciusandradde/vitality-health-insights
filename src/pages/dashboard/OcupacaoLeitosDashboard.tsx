@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { BedDouble, Activity, Download, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
+import { BedDouble, Activity, Download, AlertTriangle, CheckCircle, AlertCircle, CreditCard, Building2, Users, Calendar, Hospital } from 'lucide-react';
 import type { Leito, OcupacaoLeito, StatusOcupacao, TableColumn, Internacao, KPICritico } from '@/types/dashboard';
 import {
   calculateOcupacaoPorCentroCusto,
@@ -21,6 +21,7 @@ import {
   calculateOcupacaoPorConvenioTop10,
   calculateOcupacaoPorEspecialidadeTop10,
   calculateKPIsCriticos,
+  calculateLeitosOperacionais,
 } from '@/lib/business-rules';
 import { SimpleAreaChart, SimpleBarChart } from '@/components/dashboard';
 
@@ -117,6 +118,19 @@ export default function OcupacaoLeitosDashboard() {
   const ocupacaoPorConvenio = calculateOcupacaoPorConvenioTop10(mockInternacoes);
   const ocupacaoPorEspecialidade = calculateOcupacaoPorEspecialidadeTop10(mockInternacoes);
   const kpisCriticos = calculateKPIsCriticos(mockLeitos, mockLeitosCadastrados);
+  const leitosOperacionais = calculateLeitosOperacionais(mockLeitos, mockInternacoes);
+
+  // Calcular Leitos dia sim (Leito-Dia)
+  const hoje = new Date().toISOString().split('T')[0];
+  const leitosDiaSim = mockInternacoes.filter((i) => {
+    const dataEntrada = new Date(i.data_entrada).toISOString().split('T')[0];
+    const dataSaida = i.data_saida ? new Date(i.data_saida).toISOString().split('T')[0] : null;
+    // Paciente está internado hoje se: entrou hoje ou antes, e não teve alta ou alta é depois de hoje
+    return dataEntrada <= hoje && (!dataSaida || dataSaida >= hoje);
+  }).length;
+
+  // Total de leitos cadastrados
+  const totalLeitos = mockLeitosCadastrados.reduce((sum, l) => sum + l.total, 0);
 
   // Dados para Pie Charts
   const convenioPieData = ocupacaoPorConvenio.map((c) => ({
@@ -129,31 +143,43 @@ export default function OcupacaoLeitosDashboard() {
     value: e.percentual,
   }));
 
-  // KPIs principais
+  // KPIs principais - Cards ordenados conforme a imagem
   const kpis = [
     {
-      title: 'Taxa de Ocupação Geral',
-      value: `${taxaOcupacaoGeral}%`,
+      title: 'Convênio e Particulares',
+      value: leitosOperacionais.convenio,
+      icon: CreditCard,
+      variant: 'default' as const,
+    },
+    {
+      title: 'SUS',
+      value: leitosOperacionais.sus,
+      icon: Building2,
+      variant: 'default' as const,
+    },
+    {
+      title: 'Ocupado',
+      value: leitosOperacionais.ocupado,
       icon: BedDouble,
+      variant: leitosOperacionais.ocupado > totalLeitos * 0.85 ? 'warning' : 'default' as const,
+    },
+    {
+      title: 'Livre',
+      value: leitosOperacionais.livre,
+      icon: Users,
+      variant: 'success' as const,
+    },
+    {
+      title: 'Leitos dia sim',
+      value: leitosDiaSim,
+      icon: Calendar,
       variant: 'default' as const,
     },
     {
       title: 'Total de Leitos',
-      value: mockLeitosCadastrados.reduce((sum, l) => sum + l.total, 0),
-      icon: BedDouble,
+      value: totalLeitos,
+      icon: Hospital,
       variant: 'default' as const,
-    },
-    {
-      title: 'Leitos Ocupados',
-      value: mockLeitos.filter((l) => l.status === 'ocupado' || l.status === 'reservado').length,
-      icon: Activity,
-      variant: 'default' as const,
-    },
-    {
-      title: 'Leitos Disponíveis',
-      value: mockLeitos.filter((l) => l.status === 'disponivel').length,
-      icon: BedDouble,
-      variant: 'success' as const,
     },
   ];
 
@@ -222,8 +248,8 @@ export default function OcupacaoLeitosDashboard() {
         </Button>
       </div>
 
-      {/* KPIs */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPIs - 6 cards em layout responsivo */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {kpis.map((kpi, idx) => (
           <KPICard key={idx} {...kpi} />
         ))}

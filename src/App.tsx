@@ -7,6 +7,28 @@ import Dashboard from "./pages/Dashboard";
 import { ModulePage } from "./pages/ModulePage";
 import NotFound from "./pages/NotFound";
 
+// Módulos Assistenciais
+import AtendimentosPage from "./pages/modules/assistencial/AtendimentosPage";
+import AmbulatorioPage from "./pages/modules/assistencial/AmbulatorioPage";
+import AgendasPage from "./pages/modules/assistencial/AgendasPage";
+import InternacaoPage from "./pages/modules/assistencial/InternacaoPage";
+import LaboratorioPage from "./pages/modules/assistencial/LaboratorioPage";
+import ImagemPage from "./pages/modules/assistencial/ImagemPage";
+import TransfusionalPage from "./pages/modules/assistencial/TransfusionalPage";
+import FarmaciaPage from "./pages/modules/assistencial/FarmaciaPage";
+
+// Módulos Gerenciais
+import FinanceiroPage from "./pages/modules/gerencial/FinanceiroPage";
+import FaturamentoPage from "./pages/modules/gerencial/FaturamentoPage";
+import EstoquePage from "./pages/modules/gerencial/EstoquePage";
+import NutricaoPage from "./pages/modules/gerencial/NutricaoPage";
+import LavanderiaPage from "./pages/modules/gerencial/LavanderiaPage";
+import HigienizacaoPage from "./pages/modules/gerencial/HigienizacaoPage";
+import HotelariaPage from "./pages/modules/gerencial/HotelariaPage";
+import SPPPage from "./pages/modules/gerencial/SPPPage";
+import TIPage from "./pages/modules/gerencial/TIPage";
+import SESMTPage from "./pages/modules/gerencial/SESMTPage";
+
 // Configurações
 import ConfiguracoesIndex from "./pages/configuracoes";
 import PerfilPage from "./pages/configuracoes/PerfilPage";
@@ -30,28 +52,30 @@ const App = () => (
           <Route path="/" element={<Dashboard />} />
           
           {/* Assistencial */}
-          <Route path="/assistencial/atendimentos" element={<ModulePage title="Atendimentos" subtitle="Análise de atendimentos em tempo real" />} />
-          <Route path="/assistencial/ambulatorio" element={<ModulePage title="Ambulatório" subtitle="Gestão ambulatorial" />} />
-          <Route path="/assistencial/agendas" element={<ModulePage title="Agendas" subtitle="Gestão de agendamentos" />} />
-          <Route path="/assistencial/agencia-transfusional" element={<ModulePage title="Agência Transfusional" subtitle="Controle de sangue e hemocomponentes" />} />
+          <Route path="/assistencial/atendimentos" element={<AtendimentosPage />} />
+          <Route path="/assistencial/ambulatorio" element={<AmbulatorioPage />} />
+          <Route path="/assistencial/agendas" element={<AgendasPage />} />
+          <Route path="/assistencial/agencia-transfusional" element={<TransfusionalPage />} />
           <Route path="/assistencial/ccih" element={<ModulePage title="CCIH" subtitle="Controle de Infecção Hospitalar" />} />
-          <Route path="/assistencial/exames-imagem" element={<ModulePage title="Exames de Imagem" subtitle="Gestão de exames de imagem" />} />
-          <Route path="/assistencial/exames-lab" element={<ModulePage title="Exames Laboratoriais" subtitle="Análise de exames" />} />
-          <Route path="/assistencial/farmacia" element={<ModulePage title="Farmácia" subtitle="Gestão farmacêutica" />} />
+          <Route path="/assistencial/exames-imagem" element={<ImagemPage />} />
+          <Route path="/assistencial/exames-lab" element={<LaboratorioPage />} />
+          <Route path="/assistencial/farmacia" element={<FarmaciaPage />} />
           <Route path="/assistencial/fisioterapia" element={<ModulePage title="Fisioterapia" subtitle="Análise de sessões e evolução" />} />
-          <Route path="/assistencial/internacao" element={<ModulePage title="Internação" subtitle="Gestão de leitos e internações" />} />
-          <Route path="/assistencial/nutricao" element={<ModulePage title="Nutrição" subtitle="Gestão nutricional e dietas" />} />
+          <Route path="/assistencial/internacao" element={<InternacaoPage />} />
+          <Route path="/assistencial/nutricao" element={<NutricaoPage />} />
           <Route path="/assistencial/uti" element={<ModulePage title="UTI" subtitle="Unidade de Terapia Intensiva" />} />
           
           {/* Gerencial */}
-          <Route path="/gerencial/estoque" element={<ModulePage title="Estoque" subtitle="Controle de estoque" />} />
-          <Route path="/gerencial/faturamento" element={<ModulePage title="Faturamento" subtitle="Gestão de faturamento" />} />
-          <Route path="/gerencial/financeiro" element={<ModulePage title="Financeiro" subtitle="Gestão financeira" />} />
-          <Route path="/gerencial/higienizacao" element={<ModulePage title="Higienização" subtitle="Gestão de limpeza e higienização" />} />
-          <Route path="/gerencial/lavanderia" element={<ModulePage title="Lavanderia" subtitle="Gestão de lavanderia e roupas" />} />
+          <Route path="/gerencial/estoque" element={<EstoquePage />} />
+          <Route path="/gerencial/faturamento" element={<FaturamentoPage />} />
+          <Route path="/gerencial/financeiro" element={<FinanceiroPage />} />
+          <Route path="/gerencial/higienizacao" element={<HigienizacaoPage />} />
+          <Route path="/gerencial/lavanderia" element={<LavanderiaPage />} />
           <Route path="/gerencial/relatorios" element={<ModulePage title="Relatórios" subtitle="Relatórios gerenciais" />} />
-          <Route path="/gerencial/sesmt" element={<ModulePage title="SESMT" subtitle="Serviço Especializado em Engenharia de Segurança e em Medicina do Trabalho" />} />
-          <Route path="/gerencial/ti" element={<ModulePage title="TI" subtitle="Tecnologia da Informação" />} />
+          <Route path="/gerencial/sesmt" element={<SESMTPage />} />
+          <Route path="/gerencial/ti" element={<TIPage />} />
+          <Route path="/gerencial/hotelaria" element={<HotelariaPage />} />
+          <Route path="/gerencial/spp" element={<SPPPage />} />
           
           {/* Configurações */}
           <Route path="/configuracoes" element={<ConfiguracoesIndex />} />

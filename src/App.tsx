@@ -7,6 +7,17 @@ import Dashboard from "./pages/Dashboard";
 import { ModulePage } from "./pages/ModulePage";
 import NotFound from "./pages/NotFound";
 
+// Configurações
+import ConfiguracoesIndex from "./pages/configuracoes";
+import PerfilPage from "./pages/configuracoes/PerfilPage";
+import OrganizacaoPage from "./pages/configuracoes/OrganizacaoPage";
+import EquipePage from "./pages/configuracoes/EquipePage";
+import ModulosPage from "./pages/configuracoes/ModulosPage";
+import IntegracoesPage from "./pages/configuracoes/IntegracoesPage";
+import NotificacoesPage from "./pages/configuracoes/NotificacoesPage";
+import SegurancaPage from "./pages/configuracoes/SegurancaPage";
+import PlanoFaturamentoPage from "./pages/configuracoes/PlanoFaturamentoPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -43,7 +54,15 @@ const App = () => (
           <Route path="/gerencial/ti" element={<ModulePage title="TI" subtitle="Tecnologia da Informação" />} />
           
           {/* Configurações */}
-          <Route path="/configuracoes" element={<ModulePage title="Configurações" subtitle="Configurações do sistema" />} />
+          <Route path="/configuracoes" element={<ConfiguracoesIndex />} />
+          <Route path="/configuracoes/perfil" element={<PerfilPage />} />
+          <Route path="/configuracoes/organizacao" element={<OrganizacaoPage />} />
+          <Route path="/configuracoes/equipe" element={<EquipePage />} />
+          <Route path="/configuracoes/modulos" element={<ModulosPage />} />
+          <Route path="/configuracoes/integracoes" element={<IntegracoesPage />} />
+          <Route path="/configuracoes/notificacoes" element={<NotificacoesPage />} />
+          <Route path="/configuracoes/seguranca" element={<SegurancaPage />} />
+          <Route path="/configuracoes/plano" element={<PlanoFaturamentoPage />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

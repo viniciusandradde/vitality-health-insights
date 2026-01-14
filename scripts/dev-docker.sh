@@ -90,13 +90,18 @@ case "$1" in
     docker exec -it vsa_postgres_dev psql -U vsa_user -d vsa_analytics
     ;;
   
+  test-db)
+    echo "🧪 Testando banco de dados..."
+    "$SCRIPT_DIR/test-database.sh"
+    ;;
+  
   redis)
     echo "🔴 Acessando Redis CLI..."
     docker exec -it vsa_redis_dev redis-cli
     ;;
   
   *)
-    echo "Uso: $0 {start|start-infra|start-all|stop|restart|logs|ps|build|clean|reset|db|redis}"
+    echo "Uso: $0 {start|start-infra|start-all|stop|restart|logs|ps|build|clean|reset|db|test-db|redis}"
     echo ""
     echo "Comandos:"
     echo "  start       - Inicia apenas infraestrutura (PostgreSQL + Redis) - RÁPIDO"
@@ -110,6 +115,7 @@ case "$1" in
     echo "  clean       - Remove containers e volumes"
     echo "  reset       - Limpa tudo e reinicia"
     echo "  db          - Acessa PostgreSQL CLI"
+    echo "  test-db     - Testa conexão com banco de dados"
     echo "  redis       - Acessa Redis CLI"
     exit 1
     ;;

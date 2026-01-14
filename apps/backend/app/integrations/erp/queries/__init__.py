@@ -1,0 +1,1 @@
+"""ERP SQL queries module."""

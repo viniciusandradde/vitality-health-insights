@@ -1,73 +1,145 @@
-# Welcome to your Lovable project
+# VSA Analytics Health - Monorepo
 
-## Project info
+Plataforma SaaS multi-tenant de Business Intelligence para hospitais.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Estrutura do Projeto
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+vsa-analytics-health/
+├── apps/
+│   ├── frontend/          # React + Vite + TypeScript
+│   └── backend/           # FastAPI + PostgreSQL
+├── packages/
+│   └── shared/            # Tipos compartilhados
+├── docker/                # Docker Compose
+└── scripts/               # Scripts utilitários
 ```
 
-**Edit a file directly in GitHub**
+## Status da Implementação
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### ✅ Concluído
 
-**Use GitHub Codespaces**
+1. **Estrutura Monorepo**
+   - pnpm-workspace configurado
+   - Frontend movido para `apps/frontend`
+   - Backend criado em `apps/backend`
+   - Package shared criado
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+2. **Docker**
+   - PostgreSQL 16 configurado
+   - Redis configurado
+   - Docker Compose para desenvolvimento e produção
 
-## What technologies are used for this project?
+3. **Backend Core**
+   - FastAPI configurado
+   - SQLAlchemy com async
+   - JWT authentication
+   - Redis cache
+   - Middleware de tenant
+   - Configurações centralizadas
 
-This project is built with:
+4. **Modelos de Banco**
+   - Tenant, User, Role
+   - Subscription, Plan, Invoice
+   - AuditLog
+   - Atendimento, Internacao, Leito (assistencial)
+   - Estrutura para modelos gerenciais
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+5. **Migrations**
+   - Alembic configurado
+   - Estrutura de migrations pronta
 
-## How can I deploy this project?
+6. **Autenticação**
+   - Login, Register
+   - Refresh token
+   - Forgot/Reset password
+   - Verify email
+   - Get current user
+   - Logout
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### 🚧 Em Progresso / Pendente
 
-## Can I connect a custom domain to my Lovable project?
+- Rotas Admin SaaS (tenants, users, plans, billing, audit)
+- Rotas Dashboard (KPIs, gráficos)
+- Rotas Assistencial (12 módulos)
+- Rotas Gerencial (7 módulos)
+- Rotas Settings (configurações)
+- Integração Frontend
+- Testes e Documentação
 
-Yes, you can!
+## Como Usar
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Pré-requisitos
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Node.js 18+
+- pnpm 10+
+- Python 3.12+
+- Docker & Docker Compose
+
+### Instalação
+
+```bash
+# Instalar dependências
+pnpm install
+
+# Instalar dependências Python do backend
+cd apps/backend
+pip install -r requirements.txt
+```
+
+### Desenvolvimento
+
+```bash
+# Iniciar Docker (PostgreSQL + Redis)
+pnpm docker:up
+
+# Backend (porta 8000)
+cd apps/backend
+pnpm dev
+
+# Frontend (porta 8080)
+cd apps/frontend
+pnpm dev
+```
+
+### Migrations
+
+```bash
+cd apps/backend
+
+# Criar nova migration
+pnpm migrate:create "descricao"
+
+# Aplicar migrations
+pnpm migrate
+```
+
+## Estrutura de API
+
+### Autenticação
+
+- `POST /api/v1/auth/login` - Login
+- `POST /api/v1/auth/register` - Registro
+- `POST /api/v1/auth/refresh` - Refresh token
+- `POST /api/v1/auth/forgot-password` - Solicitar reset
+- `POST /api/v1/auth/reset-password` - Resetar senha
+- `POST /api/v1/auth/verify-email` - Verificar email
+- `GET /api/v1/auth/me` - Usuário atual
+- `POST /api/v1/auth/logout` - Logout
+
+## Próximos Passos
+
+1. Implementar rotas Admin SaaS
+2. Implementar rotas Dashboard
+3. Implementar rotas Assistencial
+4. Implementar rotas Gerencial
+5. Implementar rotas Settings
+6. Integrar frontend com backend
+7. Adicionar testes
+8. Documentação OpenAPI
+
+## Tecnologias
+
+- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: FastAPI, SQLAlchemy, Alembic, PostgreSQL, Redis
+- **DevOps**: Docker, Docker Compose

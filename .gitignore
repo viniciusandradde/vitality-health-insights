@@ -7,10 +7,43 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# Dependencies
+node_modules/
+**/node_modules/
+**/dist/
+**/.next/
+**/.turbo/
+
+# Build outputs
 dist
 dist-ssr
 *.local
+
+# Lock files (manter apenas pnpm-lock.yaml)
+package-lock.json
+yarn.lock
+bun.lockb
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python (backend)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.db
+*.sqlite
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Editor directories and files
 .vscode/*

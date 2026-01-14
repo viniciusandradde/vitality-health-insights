@@ -1,0 +1,16 @@
+{
+  "name": "@vsa/backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "start": "uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "build": "echo 'Backend build complete'",
+    "migrate": "alembic upgrade head",
+    "migrate:create": "alembic revision --autogenerate -m",
+    "test": "pytest",
+    "lint": "ruff check .",
+    "typecheck": "echo 'Python type checking via mypy (optional)'",
+    "format": "black ."
+  }
+}

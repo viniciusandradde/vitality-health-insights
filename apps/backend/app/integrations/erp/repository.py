@@ -52,11 +52,29 @@ class ERPRepository:
             # Get engine
             engine = await self._get_engine()
 
-            # Prepare parameters - ensure all required params are present
-            params = parameters or {}
-            
-            # For atendimentos query (movimentação), não precisa de parâmetros de data
-            # A query já usa CURRENT_DATE internamente
+            # Prepare parameters - convert to positional for asyncpg ($1, $2, etc)
+            params_dict = {}
+            if parameters:
+                from datetime import date
+                # Convert date strings to date objects
+                if "data_inicio" in parameters:
+                    value = parameters["data_inicio"]
+                    if isinstance(value, str):
+                        try:
+                            params_dict["data_inicio"] = date.fromisoformat(value)
+                        except ValueError:
+                            params_dict["data_inicio"] = None
+                    else:
+                        params_dict["data_inicio"] = value
+                if "data_fim" in parameters:
+                    value = parameters["data_fim"]
+                    if isinstance(value, str):
+                        try:
+                            params_dict["data_fim"] = date.fromisoformat(value)
+                        except ValueError:
+                            params_dict["data_fim"] = None
+                    else:
+                        params_dict["data_fim"] = value
 
             # Execute query
             logger.info(
@@ -64,9 +82,16 @@ class ERPRepository:
             )
 
             async with engine.begin() as conn:
-                result = await conn.execute(
-                    text(query_sql), params
-                )
+                # For asyncpg with $1, $2 syntax, pass parameters as tuple
+                if params_dict:
+                    # Convert to tuple in order: data_inicio = $1, data_fim = $2
+                    params_tuple = (
+                        params_dict.get("data_inicio"),
+                        params_dict.get("data_fim"),
+                    )
+                    result = await conn.execute(text(query_sql), params_tuple)
+                else:
+                    result = await conn.execute(text(query_sql))
                 rows = result.fetchall()
 
                 # Convert to list of dicts

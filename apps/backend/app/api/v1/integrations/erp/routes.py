@@ -27,6 +27,10 @@ from app.models.user import User
 
 router = APIRouter(prefix="/erp", tags=["Integrations - ERP"])
 
+# Import dashboard routes
+from app.integrations.erp.routes.dashboard import router as dashboard_router
+router.include_router(dashboard_router)
+
 
 async def get_erp_service(
     tenant_id: UUID = Depends(get_current_tenant_id),

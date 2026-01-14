@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Users,
   Clock,
@@ -7,8 +8,8 @@ import {
   Calendar,
   AlertTriangle,
   CheckCircle,
+  Loader2,
 } from 'lucide-react';
-import { AppLayout } from '@/components/layout/AppLayout';
 import {
   KPICard,
   ChartCard,
@@ -26,66 +27,76 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Download } from 'lucide-react';
-
-// Sample data
-const atendimentosHora = [
-  { hora: '06h', value: 12 },
-  { hora: '08h', value: 45 },
-  { hora: '10h', value: 78 },
-  { hora: '12h', value: 65 },
-  { hora: '14h', value: 82 },
-  { hora: '16h', value: 71 },
-  { hora: '18h', value: 55 },
-  { hora: '20h', value: 38 },
-  { hora: '22h', value: 22 },
-];
-
-const especialidadesData = [
-  { name: 'Clínica Geral', value: 245 },
-  { name: 'Pediatria', value: 189 },
-  { name: 'Ortopedia', value: 156 },
-  { name: 'Cardiologia', value: 134 },
-  { name: 'Ginecologia', value: 98 },
-];
-
-const ocupacaoSemanal = [
-  { dia: 'Seg', uti: 85, enfermaria: 72, emergencia: 65 },
-  { dia: 'Ter', uti: 88, enfermaria: 75, emergencia: 70 },
-  { dia: 'Qua', uti: 92, enfermaria: 78, emergencia: 68 },
-  { dia: 'Qui', uti: 87, enfermaria: 74, emergencia: 72 },
-  { dia: 'Sex', uti: 95, enfermaria: 80, emergencia: 75 },
-  { dia: 'Sáb', uti: 82, enfermaria: 68, emergencia: 60 },
-  { dia: 'Dom', uti: 78, enfermaria: 62, emergencia: 55 },
-];
-
-const conveniosData = [
-  { name: 'SUS', value: 45 },
-  { name: 'Unimed', value: 25 },
-  { name: 'Bradesco', value: 15 },
-  { name: 'Particular', value: 10 },
-  { name: 'Outros', value: 5 },
-];
+import { useIndicadoresGerais } from '@/hooks/useErpDashboard';
 
 export default function IndicadoresGeraisDashboard() {
+  const [periodo, setPeriodo] = useState<'dia' | 'semana' | 'mes'>('dia');
+  const [setor, setSetor] = useState<string | undefined>(undefined);
+
+  const { data, isLoading, error, refetch } = useIndicadoresGerais({
+    periodo: periodo === 'semana' ? 'semana' : periodo === 'mes' ? 'mes' : 'dia',
+    setor: setor && setor !== 'all' ? setor : undefined,
+  });
+
+  // Mapear dados da API para o formato esperado pelos componentes
+  const atendimentosHora = data?.atendimentos_hora || [];
+  const especialidadesData = data?.top_especialidades || [];
+  const ocupacaoSemanal = data?.ocupacao_semanal || [];
+  const conveniosData = data?.distribuicao_convenio || [];
+
+  // Converter KPIs da API para o formato do componente
+  const kpis = data?.kpis || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Carregando dados...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Erro ao carregar dados: {error.message}
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-4"
+            onClick={() => refetch()}
+          >
+            Tentar novamente
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <>
       {/* Filters */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Select defaultValue="today">
+          <Select
+            value={periodo}
+            onValueChange={(v) => setPeriodo(v as 'dia' | 'semana' | 'mes')}
+          >
             <SelectTrigger className="w-[180px] bg-card">
               <SelectValue placeholder="Período" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="today">Hoje</SelectItem>
-              <SelectItem value="week">Últimos 7 dias</SelectItem>
-              <SelectItem value="month">Últimos 30 dias</SelectItem>
-              <SelectItem value="quarter">Último trimestre</SelectItem>
+              <SelectItem value="dia">Hoje</SelectItem>
+              <SelectItem value="semana">Últimos 7 dias</SelectItem>
+              <SelectItem value="mes">Últimos 30 dias</SelectItem>
             </SelectContent>
           </Select>
           
-          <Select defaultValue="all">
+          <Select value={setor || 'all'} onValueChange={(v) => setSetor(v === 'all' ? undefined : v)}>
             <SelectTrigger className="w-[180px] bg-card">
               <SelectValue placeholder="Setor" />
             </SelectTrigger>
@@ -106,127 +117,112 @@ export default function IndicadoresGeraisDashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Atendimentos Hoje"
-          value="847"
-          icon={Users}
-          trend={{ value: 12.5, label: 'vs ontem' }}
-          variant="default"
-        />
-        <KPICard
-          title="Tempo Médio Espera"
-          value="32 min"
-          icon={Clock}
-          trend={{ value: -8.3, label: 'vs semana' }}
-          variant="success"
-        />
-        <KPICard
-          title="Taxa Ocupação UTI"
-          value="87%"
-          icon={BedDouble}
-          trend={{ value: 3.2, label: 'vs ontem' }}
-          variant="warning"
-        />
-        <KPICard
-          title="Cirurgias Realizadas"
-          value="23"
-          icon={Activity}
-          trend={{ value: 0, label: 'estável' }}
-        />
-      </div>
+      {kpis.length > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {kpis.map((kpi, index) => {
+            // Mapear ícones baseado no título
+            const getIcon = () => {
+              if (kpi.title.toLowerCase().includes('atendimento')) return Users;
+              if (kpi.title.toLowerCase().includes('tempo') || kpi.title.toLowerCase().includes('espera')) return Clock;
+              if (kpi.title.toLowerCase().includes('ocupação') || kpi.title.toLowerCase().includes('leito')) return BedDouble;
+              if (kpi.title.toLowerCase().includes('cirurgia')) return Activity;
+              if (kpi.title.toLowerCase().includes('agendamento')) return Calendar;
+              if (kpi.title.toLowerCase().includes('alerta')) return AlertTriangle;
+              if (kpi.title.toLowerCase().includes('alta')) return CheckCircle;
+              return Activity;
+            };
 
-      {/* Secondary KPIs */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Leitos Disponíveis"
-          value="42"
-          icon={BedDouble}
-          description="de 180 leitos totais"
-        />
-        <KPICard
-          title="Agendamentos Hoje"
-          value="156"
-          icon={Calendar}
-          trend={{ value: 5.2, label: 'vs média' }}
-        />
-        <KPICard
-          title="Alertas Ativos"
-          value="7"
-          icon={AlertTriangle}
-          variant="destructive"
-          description="2 críticos, 5 moderados"
-        />
-        <KPICard
-          title="Altas Previstas"
-          value="28"
-          icon={CheckCircle}
-          variant="success"
-          description="para hoje"
-        />
-      </div>
+            const trend = kpi.trend_value !== null && kpi.trend_value !== undefined
+              ? {
+                  value: kpi.trend_value,
+                  label: kpi.trend_label || '',
+                }
+              : undefined;
+
+            return (
+              <KPICard
+                key={index}
+                title={kpi.title}
+                value={kpi.value}
+                icon={getIcon()}
+                trend={trend}
+                variant={kpi.variant as any}
+                description={kpi.description || undefined}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Charts Row 1 */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ChartCard
-          title="Atendimentos por Hora"
-          description="Últimas 24 horas"
-          actions={
-            <Button variant="ghost" size="sm">
-              Ver detalhes
-            </Button>
-          }
-        >
-          <SimpleAreaChart data={atendimentosHora} dataKey="value" xAxisKey="hora" height={250} />
-        </ChartCard>
+        {atendimentosHora.length > 0 && (
+          <ChartCard
+            title="Atendimentos por Hora"
+            description="Últimas 24 horas"
+            actions={
+              <Button variant="ghost" size="sm">
+                Ver detalhes
+              </Button>
+            }
+          >
+            <SimpleAreaChart data={atendimentosHora} dataKey="value" xAxisKey="hora" height={250} />
+          </ChartCard>
+        )}
 
-        <ChartCard
-          title="Ocupação Semanal por Setor"
-          description="Comparativo de ocupação"
-        >
-          <MultiLineChart
-            data={ocupacaoSemanal}
-            xAxisKey="dia"
-            height={250}
-            lines={[
-              { dataKey: 'uti', color: 'hsl(0, 72%, 50%)', name: 'UTI' },
-              { dataKey: 'enfermaria', color: 'hsl(200, 98%, 39%)', name: 'Enfermaria' },
-              { dataKey: 'emergencia', color: 'hsl(38, 92%, 50%)', name: 'Emergência' },
-            ]}
-          />
-        </ChartCard>
+        {ocupacaoSemanal.length > 0 && (
+          <ChartCard
+            title="Ocupação Semanal por Setor"
+            description="Comparativo de ocupação"
+          >
+            <MultiLineChart
+              data={ocupacaoSemanal}
+              xAxisKey="dia"
+              height={250}
+              lines={[
+                { dataKey: 'uti', color: 'hsl(0, 72%, 50%)', name: 'UTI' },
+                { dataKey: 'enfermaria', color: 'hsl(200, 98%, 39%)', name: 'Enfermaria' },
+                { dataKey: 'emergencia', color: 'hsl(38, 92%, 50%)', name: 'Emergência' },
+              ]}
+            />
+          </ChartCard>
+        )}
       </div>
 
       {/* Charts Row 2 */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <ChartCard title="Top 5 Especialidades" description="Por volume de atendimentos">
-          <SimpleBarChart data={especialidadesData} dataKey="value" height={220} />
-        </ChartCard>
+        {especialidadesData.length > 0 && (
+          <ChartCard title="Top 5 Especialidades" description="Por volume de atendimentos">
+            <SimpleBarChart data={especialidadesData} dataKey="value" height={220} />
+          </ChartCard>
+        )}
 
-        <ChartCard title="Distribuição por Convênio" description="Atendimentos do mês">
-          <div className="flex items-center justify-center">
-            <SimplePieChart data={conveniosData} height={220} />
-          </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-3">
-            {conveniosData.map((item, index) => (
-              <div key={item.name} className="flex items-center gap-1.5">
-                <div
-                  className="h-3 w-3 rounded-full"
-                  style={{
-                    backgroundColor: [
-                      'hsl(200, 98%, 39%)',
-                      'hsl(142, 76%, 36%)',
-                      'hsl(38, 92%, 50%)',
-                      'hsl(0, 72%, 50%)',
-                      'hsl(262, 83%, 58%)',
-                    ][index],
-                  }}
-                />
-                <span className="text-xs text-muted-foreground">{item.name}</span>
-              </div>
-            ))}
-          </div>
-        </ChartCard>
+        {conveniosData.length > 0 && (
+          <ChartCard title="Distribuição por Convênio" description="Atendimentos do mês">
+            <div className="flex items-center justify-center">
+              <SimplePieChart data={conveniosData} height={220} />
+            </div>
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              {conveniosData.map((item, index) => (
+                <div key={item.name} className="flex items-center gap-1.5">
+                  <div
+                    className="h-3 w-3 rounded-full"
+                    style={{
+                      backgroundColor: [
+                        'hsl(200, 98%, 39%)',
+                        'hsl(142, 76%, 36%)',
+                        'hsl(38, 92%, 50%)',
+                        'hsl(0, 72%, 50%)',
+                        'hsl(262, 83%, 58%)',
+                      ][index],
+                    }}
+                  />
+                  <span className="text-xs text-muted-foreground">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </ChartCard>
+        )}
 
         <ChartCard title="Indicadores de Qualidade" description="Métricas em tempo real">
           <div className="flex flex-col items-center justify-center gap-6 py-4">

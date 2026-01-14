@@ -8,7 +8,9 @@ from passlib.context import CryptContext
 from app.core.config import settings
 
 # Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Usando pbkdf2_sha256 - seguro, sem limites de tamanho, built-in no passlib
+# bcrypt tem bug com a lib bcrypt do container (detecta wrap_bug com 73 bytes)
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

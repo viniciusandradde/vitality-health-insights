@@ -1,4 +1,5 @@
 import { Menu, Search, Bell, HelpCircle, User } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSidebarStore } from '@/stores/sidebarStore';
+import { clearAuthTokens } from "@/lib/auth";
 
 interface HeaderProps {
   title: string;
@@ -18,6 +20,12 @@ interface HeaderProps {
 
 export function Header({ title, subtitle }: HeaderProps) {
   const { toggle, isOpen } = useSidebarStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    clearAuthTokens();
+    navigate("/login");
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card px-4 lg:px-6">
@@ -75,7 +83,7 @@ export function Header({ title, subtitle }: HeaderProps) {
             <DropdownMenuItem>Perfil</DropdownMenuItem>
             <DropdownMenuItem>Configurações</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
               Sair
             </DropdownMenuItem>
           </DropdownMenuContent>

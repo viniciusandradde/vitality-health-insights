@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import { ModulePage } from "./pages/ModulePage";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import RequireAuth from "@/components/auth/RequireAuth";
 
 // Módulos Assistenciais
 import AtendimentosPage from "./pages/modules/assistencial/AtendimentosPage";
@@ -52,44 +54,48 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          
-          {/* Assistencial */}
-          <Route path="/assistencial/atendimentos" element={<AtendimentosPage />} />
-          <Route path="/assistencial/ambulatorio" element={<AmbulatorioPage />} />
-          <Route path="/assistencial/agendas" element={<AgendasPage />} />
-          <Route path="/assistencial/agencia-transfusional" element={<TransfusionalPage />} />
-          <Route path="/assistencial/ccih" element={<CCIHPage />} />
-          <Route path="/assistencial/exames-imagem" element={<ImagemPage />} />
-          <Route path="/assistencial/exames-lab" element={<LaboratorioPage />} />
-          <Route path="/assistencial/farmacia" element={<FarmaciaPage />} />
-          <Route path="/assistencial/fisioterapia" element={<FisioterapiaPage />} />
-          <Route path="/assistencial/internacao" element={<InternacaoPage />} />
-          <Route path="/assistencial/nutricao" element={<NutricaoPage />} />
-          <Route path="/assistencial/uti" element={<UTIPage />} />
-          
-          {/* Gerencial */}
-          <Route path="/gerencial/estoque" element={<EstoquePage />} />
-          <Route path="/gerencial/faturamento" element={<FaturamentoPage />} />
-          <Route path="/gerencial/financeiro" element={<FinanceiroPage />} />
-          <Route path="/gerencial/higienizacao" element={<HigienizacaoPage />} />
-          <Route path="/gerencial/lavanderia" element={<LavanderiaPage />} />
-          <Route path="/gerencial/sesmt" element={<SESMTPage />} />
-          <Route path="/gerencial/ti" element={<TIPage />} />
-          <Route path="/gerencial/hotelaria" element={<HotelariaPage />} />
-          <Route path="/gerencial/spp" element={<SPPPage />} />
-          
-          {/* Configurações */}
-          <Route path="/configuracoes" element={<ConfiguracoesIndex />} />
-          <Route path="/configuracoes/perfil" element={<PerfilPage />} />
-          <Route path="/configuracoes/organizacao" element={<OrganizacaoPage />} />
-          <Route path="/configuracoes/equipe" element={<EquipePage />} />
-          <Route path="/configuracoes/modulos" element={<ModulosPage />} />
-          <Route path="/configuracoes/integracoes" element={<IntegracoesPage />} />
-          <Route path="/configuracoes/notificacoes" element={<NotificacoesPage />} />
-          <Route path="/configuracoes/seguranca" element={<SegurancaPage />} />
-          <Route path="/configuracoes/plano" element={<PlanoFaturamentoPage />} />
-          
+          <Route path="/login" element={<Login />} />
+
+          <Route element={<RequireAuth />}>
+            <Route path="/" element={<Dashboard />} />
+            
+            {/* Assistencial */}
+            <Route path="/assistencial/atendimentos" element={<AtendimentosPage />} />
+            <Route path="/assistencial/ambulatorio" element={<AmbulatorioPage />} />
+            <Route path="/assistencial/agendas" element={<AgendasPage />} />
+            <Route path="/assistencial/agencia-transfusional" element={<TransfusionalPage />} />
+            <Route path="/assistencial/ccih" element={<CCIHPage />} />
+            <Route path="/assistencial/exames-imagem" element={<ImagemPage />} />
+            <Route path="/assistencial/exames-lab" element={<LaboratorioPage />} />
+            <Route path="/assistencial/farmacia" element={<FarmaciaPage />} />
+            <Route path="/assistencial/fisioterapia" element={<FisioterapiaPage />} />
+            <Route path="/assistencial/internacao" element={<InternacaoPage />} />
+            <Route path="/assistencial/nutricao" element={<NutricaoPage />} />
+            <Route path="/assistencial/uti" element={<UTIPage />} />
+            
+            {/* Gerencial */}
+            <Route path="/gerencial/estoque" element={<EstoquePage />} />
+            <Route path="/gerencial/faturamento" element={<FaturamentoPage />} />
+            <Route path="/gerencial/financeiro" element={<FinanceiroPage />} />
+            <Route path="/gerencial/higienizacao" element={<HigienizacaoPage />} />
+            <Route path="/gerencial/lavanderia" element={<LavanderiaPage />} />
+            <Route path="/gerencial/sesmt" element={<SESMTPage />} />
+            <Route path="/gerencial/ti" element={<TIPage />} />
+            <Route path="/gerencial/hotelaria" element={<HotelariaPage />} />
+            <Route path="/gerencial/spp" element={<SPPPage />} />
+            
+            {/* Configurações */}
+            <Route path="/configuracoes" element={<ConfiguracoesIndex />} />
+            <Route path="/configuracoes/perfil" element={<PerfilPage />} />
+            <Route path="/configuracoes/organizacao" element={<OrganizacaoPage />} />
+            <Route path="/configuracoes/equipe" element={<EquipePage />} />
+            <Route path="/configuracoes/modulos" element={<ModulosPage />} />
+            <Route path="/configuracoes/integracoes" element={<IntegracoesPage />} />
+            <Route path="/configuracoes/notificacoes" element={<NotificacoesPage />} />
+            <Route path="/configuracoes/seguranca" element={<SegurancaPage />} />
+            <Route path="/configuracoes/plano" element={<PlanoFaturamentoPage />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

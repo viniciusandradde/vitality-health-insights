@@ -1,14 +1,13 @@
 """Service for Indicadores Gerais Dashboard."""
 from typing import Optional
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.integrations.erp.repository import ERPRepository
 from app.integrations.erp.config import ERPConfig
 from app.integrations.erp.cache import ERPCache
 from app.integrations.erp.mappers.indicadores_gerais import IndicadoresGeraisMapper
 from app.integrations.erp.schemas.indicadores_gerais import IndicadoresGeraisResponse
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal
 
 
 class IndicadoresGeraisService:
@@ -31,7 +30,7 @@ class IndicadoresGeraisService:
     @classmethod
     async def create(cls, tenant_id: UUID):
         """Factory method para criar o service com configuracao do tenant."""
-        async for db in get_db():
+        async with AsyncSessionLocal() as db:
             config = await ERPConfig.from_tenant(tenant_id, db)
             if not config:
                 raise ValueError(f"ERP config not found for tenant {tenant_id}")

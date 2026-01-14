@@ -9,108 +9,81 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Users, Activity, Calendar, Clock, Download } from 'lucide-react';
-import type { Atendimento, TableColumn } from '@/types/dashboard';
-import {
-  calculateAtendimentosPorTipo,
-  calculateAtendimentosAmbulatoriais,
-  calculateAtendimentosPorCategoriaConvenio,
-  calculateAtendimentosPorConvenio,
-  calculateAtendimentosPorTipoServico,
-  calculateTopEspecialidades,
-  calculateEspecialidadesPorCentroCusto,
-  calculateAtendimentosPorFaixaEtaria,
-  calculateAtendimentosPorHorario,
-} from '@/lib/business-rules';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Users, Activity, Calendar, Clock, Download, Loader2, AlertTriangle } from 'lucide-react';
+import type { TableColumn } from '@/types/dashboard';
 import { SimpleBarChart, SimplePieChart, SimpleAreaChart } from '@/components/dashboard';
-
-// Dados mock inline
-const mockAtendimentos: Atendimento[] = [
-  {
-    id: '1',
-    paciente_id: 'P001',
-    paciente_nome: 'Maria Silva',
-    data: '2024-01-10',
-    hora: '08:00',
-    tipo: 'Consulta',
-    tipo_servico: 'Ambulatorial',
-    especialidade: 'Clínica Geral',
-    centro_custo: 'Ambulatório',
-    convenio: 'SUS',
-    categoria_convenio: 'SUS',
-    faixa_etaria: '30-40',
-    idade: 35,
-  },
-  {
-    id: '2',
-    paciente_id: 'P002',
-    paciente_nome: 'José Oliveira',
-    data: '2024-01-10',
-    hora: '09:30',
-    tipo: 'Exame',
-    tipo_servico: 'Diagnóstico',
-    especialidade: 'Cardiologia',
-    centro_custo: 'Ambulatório',
-    convenio: 'Unimed',
-    categoria_convenio: 'convenio',
-    faixa_etaria: '50-60',
-    idade: 55,
-  },
-  {
-    id: '3',
-    paciente_id: 'P003',
-    paciente_nome: 'Pedro Alves',
-    data: '2024-01-10',
-    hora: '14:00',
-    tipo: 'Procedimento',
-    tipo_servico: 'Cirúrgico',
-    especialidade: 'Ortopedia',
-    centro_custo: 'Ambulatório',
-    convenio: 'Bradesco',
-    categoria_convenio: 'convenio',
-    faixa_etaria: '40-50',
-    idade: 45,
-  },
-];
+import { useAtendimentos } from '@/hooks/useErpDashboard';
 
 export default function AtendimentosDashboard() {
   const [periodo, setPeriodo] = useState<'dia' | 'mes'>('mes');
   const [centroCustoSelecionado, setCentroCustoSelecionado] = useState<string>('all');
 
-  // Calcular indicadores
-  const atendimentosPorTipo = calculateAtendimentosPorTipo(mockAtendimentos, periodo);
-  const totalAmbulatoriais = calculateAtendimentosAmbulatoriais(mockAtendimentos, periodo);
-  const atendimentosPorCategoria = calculateAtendimentosPorCategoriaConvenio(mockAtendimentos, periodo);
-  const atendimentosPorConvenio = calculateAtendimentosPorConvenio(mockAtendimentos, periodo);
-  const atendimentosPorTipoServico = calculateAtendimentosPorTipoServico(mockAtendimentos);
-  const topEspecialidades = calculateTopEspecialidades(mockAtendimentos, periodo, 10);
-  const especialidadesPorCC = calculateEspecialidadesPorCentroCusto(mockAtendimentos);
-  const atendimentosPorFaixaEtaria = calculateAtendimentosPorFaixaEtaria(mockAtendimentos, periodo);
-  const atendimentosPorHorario = calculateAtendimentosPorHorario(mockAtendimentos);
+  const { data, isLoading, error, refetch } = useAtendimentos({
+    periodo,
+    centro_custo: centroCustoSelecionado !== 'all' ? centroCustoSelecionado : undefined,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Carregando dados...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Erro ao carregar dados: {error.message}
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-4"
+            onClick={() => refetch()}
+          >
+            Tentar novamente
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Mapear dados da API
+  const kpisData = data?.kpis;
+  const porTipo = data?.por_tipo || [];
+  const porCategoria = data?.por_categoria_convenio || {};
+  const porConvenio = data?.por_convenio || [];
+  const topEspecialidades = data?.top_especialidades || [];
+  const porFaixaEtaria = data?.por_faixa_etaria || {};
+  const porHorario = data?.por_horario || [];
 
   // KPIs principais
   const kpis = [
     {
       title: 'Total Atendimentos Ambulatoriais',
-      value: totalAmbulatoriais,
+      value: kpisData?.total_ambulatoriais?.toString() || '0',
       icon: Users,
       variant: 'default' as const,
     },
     {
       title: 'Atendimentos por Tipo',
-      value: Object.keys(atendimentosPorTipo).length,
+      value: kpisData?.tipos_atendimento?.toString() || '0',
       icon: Activity,
       variant: 'default' as const,
     },
     {
       title: 'Top Especialidade',
-      value: topEspecialidades[0]?.especialidade || 'N/A',
+      value: kpisData?.top_especialidade || 'N/A',
       icon: Calendar,
       variant: 'default' as const,
     },
     {
       title: 'Total Convênios',
-      value: atendimentosPorConvenio.length,
+      value: kpisData?.total_convenios?.toString() || '0',
       icon: Users,
       variant: 'default' as const,
     },
@@ -164,78 +137,82 @@ export default function AtendimentosDashboard() {
 
       {/* Gráficos Row 1 */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ChartCard title="Atendimentos por Tipo" description={`Distribuição por tipo (${periodo})`}>
-          <SimpleBarChart
-            data={Object.entries(atendimentosPorTipo).map(([name, value]) => ({ name, value }))}
-            dataKey="value"
-            height={250}
-          />
-        </ChartCard>
-
-        <ChartCard title="Atendimentos por Categoria de Convênio" description={`Distribuição por categoria (${periodo})`}>
-          <div className="flex items-center justify-center">
-            <SimplePieChart
-              data={Object.entries(atendimentosPorCategoria).map(([name, value]) => ({ name, value }))}
-              height={220}
+        {porTipo.length > 0 && (
+          <ChartCard title="Atendimentos por Tipo" description={`Distribuição por tipo (${periodo})`}>
+            <SimpleBarChart
+              data={porTipo}
+              dataKey="value"
+              height={250}
             />
-          </div>
-        </ChartCard>
+          </ChartCard>
+        )}
+
+        {Object.keys(porCategoria).length > 0 && (
+          <ChartCard title="Atendimentos por Categoria de Convênio" description={`Distribuição por categoria (${periodo})`}>
+            <div className="flex items-center justify-center">
+              <SimplePieChart
+                data={Object.entries(porCategoria).map(([name, value]) => ({ name, value }))}
+                height={220}
+              />
+            </div>
+          </ChartCard>
+        )}
       </div>
 
       {/* Tabela de Atendimentos por Convênio */}
-      <div className="mb-6">
-        <ChartCard
-          title="Atendimentos por Convênio"
-          description={`Lista de convênios e total de atendimentos (${periodo})`}
-        >
-          <DataTable
-            columns={columnsConvenio}
-            data={atendimentosPorConvenio}
-            searchable={true}
-            searchPlaceholder="Buscar por convênio..."
-            pagination={{ pageSize: 10, showPagination: true }}
-          />
-        </ChartCard>
-      </div>
+      {porConvenio.length > 0 && (
+        <div className="mb-6">
+          <ChartCard
+            title="Atendimentos por Convênio"
+            description={`Lista de convênios e total de atendimentos (${periodo})`}
+          >
+            <DataTable
+              columns={columnsConvenio}
+              data={porConvenio}
+              searchable={true}
+              searchPlaceholder="Buscar por convênio..."
+              pagination={{ pageSize: 10, showPagination: true }}
+            />
+          </ChartCard>
+        </div>
+      )}
 
       {/* Gráficos Row 2 */}
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ChartCard title="Atendimentos por Tipo de Serviço" description="Distribuição mensal">
-          <SimpleBarChart
-            data={Object.entries(atendimentosPorTipoServico).map(([name, value]) => ({ name, value }))}
-            dataKey="value"
-            height={250}
-          />
-        </ChartCard>
+        {topEspecialidades.length > 0 && (
+          <ChartCard title="Top 10 Especialidades" description={`Maiores especialidades em atendimento (${periodo})`}>
+            <SimpleBarChart
+              data={topEspecialidades}
+              dataKey="value"
+              height={250}
+            />
+          </ChartCard>
+        )}
 
-        <ChartCard title="Top 10 Especialidades" description={`Maiores especialidades em atendimento (${periodo})`}>
-          <SimpleBarChart
-            data={topEspecialidades.map((e) => ({ name: e.especialidade, value: e.quantidade }))}
-            dataKey="value"
-            height={250}
-          />
-        </ChartCard>
+        {porHorario.length > 0 && (
+          <ChartCard title="Atendimentos por Faixa Horária" description="Distribuição ao longo do dia (mês)">
+            <SimpleAreaChart
+              data={porHorario.map(h => ({ horario: h.horario, quantidade: h.quantidade }))}
+              dataKey="quantidade"
+              xAxisKey="horario"
+              height={250}
+            />
+          </ChartCard>
+        )}
       </div>
 
       {/* Gráficos Row 3 */}
-      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ChartCard title="Atendimentos por Faixa Etária" description={`Distribuição por idade (${periodo})`}>
-          <SimpleBarChart
-            data={Object.entries(atendimentosPorFaixaEtaria).map(([name, value]) => ({ name, value }))}
-            dataKey="value"
-            height={250}
-          />
-        </ChartCard>
-
-        <ChartCard title="Atendimentos por Faixa Horária" description="Distribuição ao longo do dia (mês)">
-          <SimpleAreaChart
-            data={atendimentosPorHorario}
-            dataKey="quantidade"
-            xAxisKey="horario"
-            height={250}
-          />
-        </ChartCard>
-      </div>
+      {Object.keys(porFaixaEtaria).length > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <ChartCard title="Atendimentos por Faixa Etária" description={`Distribuição por idade (${periodo})`}>
+            <SimpleBarChart
+              data={Object.entries(porFaixaEtaria).map(([name, value]) => ({ name, value }))}
+              dataKey="value"
+              height={250}
+            />
+          </ChartCard>
+        </div>
+      )}
     </>
   );
 }

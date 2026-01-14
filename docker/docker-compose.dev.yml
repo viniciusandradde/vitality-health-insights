@@ -75,7 +75,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: vsa_frontend_dev
     environment:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_URL: http://backend:8000
+      DOCKER_ENV: "true"
     volumes:
       - ../apps/frontend:/app
       - frontend_node_modules:/app/node_modules

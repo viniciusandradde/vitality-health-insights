@@ -1,4 +1,5 @@
 """FastAPI routes for ERP dashboard integrations."""
+import logging
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import Optional
 from uuid import UUID
@@ -14,6 +15,7 @@ from app.integrations.erp.schemas.atendimentos import AtendimentosDashboardRespo
 from app.integrations.erp.schemas.indicadores_gerais import IndicadoresGeraisResponse
 from app.models.user import User
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/dashboard", tags=["Dashboard ERP"])
 
 
@@ -29,14 +31,17 @@ async def get_indicadores_gerais(
     Retorna KPIs gerais, atendimentos por hora, ocupacao semanal, etc.
     """
     try:
+        logger.info(f"Fetching indicadores gerais for tenant {tenant_id}, periodo={periodo}, setor={setor}")
         service = await IndicadoresGeraisService.create(tenant_id)
         return await service.get_dashboard_completo(periodo=periodo, setor=setor)
     except ValueError as e:
+        logger.error(f"ValueError in indicadores_gerais: {e}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except Exception as e:
+        logger.exception(f"Unexpected error in indicadores_gerais: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching dashboard data: {str(e)}",
@@ -107,14 +112,17 @@ async def get_atendimentos_dashboard(
     Retorna atendimentos ambulatoriais, por tipo, convenio, especialidade.
     """
     try:
+        logger.info(f"Fetching atendimentos for tenant {tenant_id}, periodo={periodo}, centro_custo={centro_custo}")
         service = await AtendimentosService.create(tenant_id)
         return await service.get_dashboard_completo(periodo=periodo, centro_custo=centro_custo)
     except ValueError as e:
+        logger.error(f"ValueError in atendimentos: {e}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except Exception as e:
+        logger.exception(f"Unexpected error in atendimentos: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching dashboard data: {str(e)}",

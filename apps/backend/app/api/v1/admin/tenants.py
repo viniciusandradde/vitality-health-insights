@@ -2,10 +2,10 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.auth.dependencies import get_current_user
+from app.api.v1.auth.dependencies import require_admin_role
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.admin.tenant import TenantCreate, TenantResponse, TenantUpdate
@@ -19,11 +19,20 @@ async def list_tenants(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
+    response: Response = None,
 ):
     """List all tenants (admin only)."""
-    # TODO: Check if user is admin/master
     tenants = await TenantService.get_tenants(db, skip=skip, limit=limit)
+    
+    # Get total count for pagination
+    total = await TenantService.get_tenants_count(db)
+    
+    # Add pagination headers for React Admin
+    if response:
+        response.headers["X-Total-Count"] = str(total)
+        response.headers["Content-Range"] = f"items {skip}-{skip+len(tenants)-1}/{total}"
+    
     return tenants
 
 
@@ -31,10 +40,9 @@ async def list_tenants(
 async def create_tenant(
     tenant_data: TenantCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
 ):
     """Create a new tenant."""
-    # TODO: Check if user is admin/master
     tenant = await TenantService.create_tenant(db, tenant_data)
     return tenant
 
@@ -43,7 +51,7 @@ async def create_tenant(
 async def get_tenant(
     tenant_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
 ):
     """Get tenant by ID."""
     tenant = await TenantService.get_tenant(db, tenant_id)
@@ -59,7 +67,7 @@ async def update_tenant(
     tenant_id: UUID,
     tenant_data: TenantUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
 ):
     """Update tenant."""
     tenant = await TenantService.update_tenant(db, tenant_id, tenant_data)
@@ -74,7 +82,7 @@ async def update_tenant(
 async def delete_tenant(
     tenant_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
 ):
     """Delete tenant (soft delete)."""
     success = await TenantService.delete_tenant(db, tenant_id)

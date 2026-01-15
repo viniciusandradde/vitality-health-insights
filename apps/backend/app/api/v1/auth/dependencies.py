@@ -54,3 +54,34 @@ async def get_current_tenant_id(
 ) -> UUID:
     """Get current tenant ID from authenticated user."""
     return current_user.tenant_id
+
+
+async def require_admin_role(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Require user to have admin or master role."""
+    from app.models.user import Role
+    
+    # Load role if not already loaded
+    if not current_user.role:
+        result = await db.execute(
+            select(Role).where(Role.id == current_user.role_id)
+        )
+        current_user.role = result.scalar_one_or_none()
+    
+    if not current_user.role:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User role not found",
+        )
+    
+    # Check if role is admin or master
+    role_name = current_user.role.name.lower()
+    if role_name not in ["admin", "master"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions. Admin or master role required.",
+        )
+    
+    return current_user

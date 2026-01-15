@@ -36,6 +36,13 @@ class TenantService:
         return list(result.scalars().all())
 
     @staticmethod
+    async def get_tenants_count(db: AsyncSession) -> int:
+        """Get total count of tenants."""
+        from sqlalchemy import func
+        result = await db.execute(select(func.count(Tenant.id)))
+        return result.scalar_one()
+
+    @staticmethod
     async def update_tenant(
         db: AsyncSession, tenant_id: UUID, tenant_data: TenantUpdate
     ) -> Optional[Tenant]:

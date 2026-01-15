@@ -2,11 +2,11 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.auth.dependencies import get_current_user
+from app.api.v1.auth.dependencies import get_current_user, require_admin_role
 from app.core.database import get_db
 from app.core.security import get_password_hash
 from app.models.user import User
@@ -22,13 +22,27 @@ async def list_tenant_users(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
+    response: Response = None,
 ):
     """List users for a tenant."""
+    # Get total count
+    count_result = await db.execute(
+        select(func.count(User.id)).where(User.tenant_id == tenant_id)
+    )
+    total = count_result.scalar_one()
+
+    # Get users
     result = await db.execute(
         select(User).where(User.tenant_id == tenant_id).offset(skip).limit(limit)
     )
     users = list(result.scalars().all())
+
+    # Add pagination headers for React Admin
+    if response:
+        response.headers["X-Total-Count"] = str(total)
+        response.headers["Content-Range"] = f"items {skip}-{skip+len(users)-1}/{total}"
+
     return users
 
 
@@ -37,7 +51,7 @@ async def create_tenant_user(
     tenant_id: UUID,
     user_data: UserAdminCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
 ):
     """Create a new user for a tenant."""
     # Check if email already exists
@@ -69,7 +83,7 @@ async def get_tenant_user(
     tenant_id: UUID,
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
 ):
     """Get user by ID."""
     result = await db.execute(
@@ -89,7 +103,7 @@ async def update_tenant_user(
     user_id: UUID,
     user_data: UserAdminUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
 ):
     """Update user."""
     result = await db.execute(
@@ -115,7 +129,7 @@ async def delete_tenant_user(
     tenant_id: UUID,
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin_role),
 ):
     """Delete user."""
     result = await db.execute(

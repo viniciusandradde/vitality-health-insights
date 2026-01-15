@@ -47,6 +47,8 @@ services:
       context: ../apps/backend
       dockerfile: Dockerfile.dev
     container_name: vsa_backend_dev
+    env_file:
+      - ../.env.erp  # Carrega credenciais ERP (gitignored) - caminho relativo ao docker-compose.dev.yml
     environment:
       DATABASE_URL: postgresql://vsa_user:${DB_PASSWORD:-vsa_dev_password}@postgres:5432/vsa_analytics
       DATABASE_URL_LOCAL: postgresql://vsa_user:${DB_PASSWORD:-vsa_dev_password}@localhost:${POSTGRES_PORT:-5433}/vsa_analytics

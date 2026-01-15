@@ -28,6 +28,7 @@ bun.lockb
 .env
 .env.local
 .env.*.local
+.env.erp
 
 # Python (backend)
 __pycache__/

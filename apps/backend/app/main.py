@@ -22,6 +22,14 @@ async def lifespan(app: FastAPI):
         await init_redis()
     except Exception as e:
         print(f"⚠️  Redis initialization skipped: {e}")
+    
+    # Initialize ERP configuration from environment variables
+    try:
+        from app.scripts.init_erp_config import init_erp_config_for_all_tenants
+        await init_erp_config_for_all_tenants()
+    except Exception as e:
+        print(f"⚠️  ERP config initialization skipped: {e}")
+    
     yield
     # Shutdown
     try:

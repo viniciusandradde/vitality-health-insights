@@ -3,19 +3,22 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@^10.26.0
 
-# Copy package files
+# Copy package files first for caching
 COPY package.json pnpm-lock.yaml* ./
 
 # Install dependencies
-RUN pnpm install
+RUN pnpm install --no-frozen-lockfile
 
-# Copy app files
+# Copy ALL source files (this ensures correct files are in container)
 COPY . .
+
+# Clean any potential cache issues
+RUN rm -rf node_modules/.vite 2>/dev/null || true
 
 # Expose port
 EXPOSE 3001
 
-# Start dev server
-CMD ["pnpm", "dev", "--host", "0.0.0.0", "--port", "3001"]
+# Start dev server with cache cleaning
+CMD ["sh", "-c", "rm -rf node_modules/.vite .vite dist && pnpm dev --host 0.0.0.0 --port 3001"]

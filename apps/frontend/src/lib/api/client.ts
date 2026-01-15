@@ -85,6 +85,66 @@ export class ApiClient {
 
     return response.json();
   }
+
+  /**
+   * Faz uma requisição PUT
+   */
+  async put<T>(endpoint: string, data?: unknown): Promise<T> {
+    const url = new URL(`${this.baseUrl}${endpoint}`, window.location.origin);
+
+    const token = getAccessToken();
+    const response = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+
+    if (!response.ok) {
+      const error: ApiError = await response.json().catch(() => ({
+        detail: `HTTP ${response.status}: ${response.statusText}`,
+        status_code: response.status,
+      }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Faz uma requisição DELETE
+   */
+  async delete<T>(endpoint: string): Promise<T> {
+    const url = new URL(`${this.baseUrl}${endpoint}`, window.location.origin);
+
+    const token = getAccessToken();
+    const response = await fetch(url.toString(), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error: ApiError = await response.json().catch(() => ({
+        detail: `HTTP ${response.status}: ${response.statusText}`,
+        status_code: response.status,
+      }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    // DELETE pode retornar 204 No Content
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return response.json();
+  }
 }
 
 // Instância singleton do cliente

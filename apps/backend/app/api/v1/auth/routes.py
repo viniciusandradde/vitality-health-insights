@@ -31,22 +31,33 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ):
     """Login with email and password."""
-    user = await AuthService.authenticate_user(
-        db, credentials.email, credentials.password
-    )
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+    try:
+        user = await AuthService.authenticate_user(
+            db, credentials.email, credentials.password
         )
 
-    # Update last login
-    user.last_login_at = datetime.utcnow().isoformat()
-    await db.commit()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+            )
 
-    tokens = await AuthService.create_tokens(user)
-    return tokens
+        # Update last login
+        user.last_login_at = datetime.utcnow().isoformat()
+        await db.commit()
+
+        tokens = await AuthService.create_tokens(user)
+        return tokens
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Login error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error during login: {str(e)}",
+        )
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -206,9 +217,18 @@ async def verify_email(
 @router.get("/me", status_code=status.HTTP_200_OK)
 async def get_current_user_info(
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Get current user information."""
     from app.schemas.user import UserResponse
+    from app.models.user import Role
+
+    # Ensure role is loaded
+    if not current_user.role:
+        result = await db.execute(
+            select(Role).where(Role.id == current_user.role_id)
+        )
+        current_user.role = result.scalar_one_or_none()
 
     return UserResponse.model_validate(current_user)
 

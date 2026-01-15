@@ -7,7 +7,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, get_db_with_tenant
 from app.core.security import decode_token
 from app.models.user import User
 from app.schemas.auth import TokenData
@@ -54,6 +54,19 @@ async def get_current_tenant_id(
 ) -> UUID:
     """Get current tenant ID from authenticated user."""
     return current_user.tenant_id
+
+
+async def get_db_with_rls(
+    tenant_id: UUID = Depends(get_current_tenant_id),
+) -> AsyncGenerator[AsyncSession, None]:
+    """
+    Dependency to get database session with RLS configured for current tenant.
+    
+    This automatically configures Row Level Security by setting the tenant_id
+    in the PostgreSQL session, ensuring all queries are filtered by tenant.
+    """
+    async for session in get_db_with_tenant(tenant_id=tenant_id):
+        yield session
 
 
 async def require_admin_role(

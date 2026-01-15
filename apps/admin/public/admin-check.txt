@@ -1,0 +1,2 @@
+Este arquivo confirma que você está acessando o ADMIN (porta 3001).
+Se você está vendo este arquivo, o volume está montado corretamente.

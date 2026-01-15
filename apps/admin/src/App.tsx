@@ -9,13 +9,18 @@ import { IntegrationList, IntegrationEdit, IntegrationShow } from "./resources/i
 import { AuditLogList, AuditLogShow } from "./resources/auditLogs";
 import { Login } from "./components/Login";
 
-const App = () => (
-  <Admin
-    authProvider={authProvider}
-    dataProvider={dataProvider}
-    dashboard={Dashboard}
-    loginPage={Login}
-  >
+console.log("🔴 REACT ADMIN APP LOADED - VERSION 3.0 - ADMIN PANEL");
+
+const App = () => {
+  console.log("🔴 REACT ADMIN APP RENDERING - VERSION 3.0");
+  return (
+    <Admin
+      authProvider={authProvider}
+      dataProvider={dataProvider}
+      dashboard={Dashboard}
+      loginPage={Login}
+      title="🔧 VSA Admin Panel"
+    >
     <Resource
       name="tenants"
       list={TenantList}
@@ -48,6 +53,7 @@ const App = () => (
       show={AuditLogShow}
     />
   </Admin>
-);
+  );
+};
 
 export default App;

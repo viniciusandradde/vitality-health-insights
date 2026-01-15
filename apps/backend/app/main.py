@@ -6,7 +6,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 
 from app.core.config import settings
 from app.core.database import close_db, init_db
-from app.core.middleware import setup_cors
+from app.core.middleware import TenantMiddleware, setup_cors
 from app.core.redis import close_redis, init_redis
 
 
@@ -22,6 +22,13 @@ async def lifespan(app: FastAPI):
         await init_redis()
     except Exception as e:
         print(f"⚠️  Redis initialization skipped: {e}")
+    
+    # Initialize database with migrations and seed data
+    try:
+        from app.scripts.init_database import init_database
+        await init_database()
+    except Exception as e:
+        print(f"⚠️  Database seeding skipped: {e}")
     
     # Initialize ERP configuration from environment variables
     try:
@@ -52,6 +59,7 @@ app = FastAPI(
 
 # Setup middleware
 setup_cors(app)
+app.add_middleware(TenantMiddleware)  # Extract tenant_id from JWT
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 

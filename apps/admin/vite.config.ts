@@ -14,12 +14,26 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 3001,
+      watch: {
+        ignored: ['**/.pnpm-store/**', '**/node_modules/.pnpm/**'],
+      },
       proxy: {
         "/api": {
           target: apiTarget,
           changeOrigin: true,
         },
       },
+      // Headers para evitar cache em desenvolvimento
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0",
+      },
+    },
+    // Limpar cache do Vite em cada build
+    clearScreen: false,
+    build: {
+      emptyOutDir: true,
     },
     plugins: [react()],
     resolve: {

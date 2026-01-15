@@ -1,6 +1,7 @@
 import { AuthProvider } from "react-admin";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api/v1";
+// Always use relative URL to leverage Vite proxy
+const API_URL = "/api/v1";
 
 interface LoginCredentials {
   email: string;
@@ -38,7 +39,14 @@ export const authProvider: AuthProvider = {
     });
 
     if (!response.ok) {
-      throw new Error("Login failed");
+      let errorMessage = "Login failed";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch {
+        errorMessage = `Login failed: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
     }
 
     const data: TokenResponse = await response.json();

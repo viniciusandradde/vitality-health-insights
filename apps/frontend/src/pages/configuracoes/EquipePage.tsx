@@ -1,13 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ConfigLayout, UserTable, UserInviteDialog } from '@/components/configuracoes';
-import { mockUsers } from '@/data/mockSettings';
+import { getUsers } from '@/lib/api/settings';
 import { toast } from 'sonner';
 import type { TenantUser, AppRole } from '@/types/settings';
 
 export default function EquipePage() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<TenantUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await getUsers();
+      setUsers(data);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      toast.error('Erro ao carregar usuários');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInvite = (data: { email: string; name: string; role: AppRole; department?: string }) => {
     const newUser: TenantUser = {
@@ -22,6 +40,18 @@ export default function EquipePage() {
     setUsers([...users, newUser]);
     toast.success(`Convite enviado para ${data.email}`);
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <ConfigLayout title="Equipe" description="Gerencie os usuários da sua organização">
+          <div className="flex items-center justify-center p-8">
+            <p className="text-gray-500">Carregando usuários...</p>
+          </div>
+        </ConfigLayout>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

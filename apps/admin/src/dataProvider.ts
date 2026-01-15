@@ -1,6 +1,7 @@
 import { DataProvider, fetchUtils } from "react-admin";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api/v1";
+// Always use relative URL to leverage Vite proxy
+const API_URL = "/api/v1/admin";
 
 const httpClient = (url: string, options: any = {}) => {
   const token = localStorage.getItem("access_token");

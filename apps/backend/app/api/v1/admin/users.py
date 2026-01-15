@@ -2,7 +2,7 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +12,7 @@ from app.core.security import get_password_hash
 from app.models.user import User
 from app.schemas.admin.user import UserAdminCreate, UserAdminUpdate
 from app.schemas.user import UserResponse
+from app.services.audit_service import AuditService
 
 router = APIRouter(prefix="/tenants/{tenant_id}/users", tags=["Admin - Users"])
 
@@ -50,6 +51,7 @@ async def list_tenant_users(
 async def create_tenant_user(
     tenant_id: UUID,
     user_data: UserAdminCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin_role),
 ):
@@ -75,6 +77,20 @@ async def create_tenant_user(
     db.add(user)
     await db.commit()
     await db.refresh(user)
+    
+    # Create audit log
+    ip_address = AuditService.get_client_ip(request)
+    await AuditService.create_audit_log(
+        db=db,
+        user=current_user,
+        action="create",
+        resource="user",
+        resource_id=user.id,
+        details={"email": user.email, "role_id": str(user.role_id)},
+        ip_address=ip_address,
+    )
+    await db.commit()
+    
     return user
 
 
@@ -102,6 +118,7 @@ async def update_tenant_user(
     tenant_id: UUID,
     user_id: UUID,
     user_data: UserAdminUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin_role),
 ):
@@ -121,6 +138,20 @@ async def update_tenant_user(
 
     await db.commit()
     await db.refresh(user)
+    
+    # Create audit log
+    ip_address = AuditService.get_client_ip(request)
+    await AuditService.create_audit_log(
+        db=db,
+        user=current_user,
+        action="update",
+        resource="user",
+        resource_id=user.id,
+        details={"updated_fields": list(update_data.keys())},
+        ip_address=ip_address,
+    )
+    await db.commit()
+    
     return user
 
 
@@ -128,6 +159,7 @@ async def update_tenant_user(
 async def delete_tenant_user(
     tenant_id: UUID,
     user_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin_role),
 ):
@@ -143,4 +175,17 @@ async def delete_tenant_user(
 
     from datetime import datetime
     user.deleted_at = datetime.utcnow()
+    await db.commit()
+    
+    # Create audit log
+    ip_address = AuditService.get_client_ip(request)
+    await AuditService.create_audit_log(
+        db=db,
+        user=current_user,
+        action="delete",
+        resource="user",
+        resource_id=user.id,
+        details={"email": user.email},
+        ip_address=ip_address,
+    )
     await db.commit()

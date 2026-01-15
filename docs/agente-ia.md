@@ -1,203 +1,252 @@
 Integração da Stack de Agente IA + RAG
-Projeto: vsa-analytics-health
-🎯 Objetivo da Integração
 
-Adicionar ao SaaS hospitalar uma camada de Inteligência Artificial corporativa, capaz de:
+Projeto: vsa-analytics-health
+Stack: FastAPI + React + PostgreSQL + pgvector + ADK + LangChain + LangGraph
+
+🎯 1. OBJETIVO DA INTEGRAÇÃO
+
+Adicionar ao SaaS hospitalar uma camada nativa de Inteligência Artificial corporativa, capaz de:
 
 Responder perguntas em linguagem natural
 
-Consultar dados operacionais, assistenciais e gerenciais
+Consultar dados assistenciais, operacionais e gerenciais
 
-Gerar insights automáticos
+Gerar insights automáticos explicáveis
 
 Operar em modo multi-tenant seguro
 
 Escalar como feature premium do produto
 
-🧠 Visão Geral da Arquitetura Integrada
+Atender LGPD e auditoria corporativa
+
+📌 Princípio fundamental
+
+A IA não é um sistema externo
+Ela é um subdomínio do backend atual
+
+🧠 2. VISÃO GERAL DA ARQUITETURA
+4
 React (Dashboard + Chat IA)
         │
         ▼
 FastAPI vsa-analytics-health
-(API principal + Auth + Tenant)
+(API Principal + Auth + Tenant)
         │
         ├── Módulos Assistencial / Gerencial / Dashboard
         │
         └── IA Service Layer
              │
-             ├── Agents (LangChain + LangGraph)
-             ├── RAG Pipeline
-             ├── pgvector (PostgreSQL 16)
+             ├── ADK (Agentes corporativos)
+             ├── LangChain (RAG / Tools)
+             ├── LangGraph (Workflows)
+             ├── PostgreSQL 16 + pgvector
              └── OpenRouter / OpenAI
 
-
-👉 A IA NÃO é um sistema separado
-👉 Ela é um subdomínio do backend atual
-
-🧩 ETAPA 1 — Organização no Monorepo
-📁 Nova Estrutura Final
+🧩 3. ETAPA 1 — ORGANIZAÇÃO NO MONOREPO
+📁 Estrutura Final do Backend
 apps/backend/app/
-├── ai/                         # NOVO MÓDULO
-│   ├── api/                    # Rotas IA
-│   │   ├── chat.py
-│   │   ├── rag.py
-│   │   └── agents.py
+├── ai/                         # SUBDOMÍNIO IA
+│   ├── api/                    # Rotas públicas IA
+│   │   ├── chat.py             # Chat IA
+│   │   ├── rag.py              # Busca e ingestão
+│   │   └── agents.py           # Invocação de agentes
 │   │
-│   ├── agents/                 # Core Agents
-│   │   ├── base.py
-│   │   ├── simple.py
-│   │   └── workflow.py
+│   ├── agents/                 # Núcleo de agentes (ADK)
+│   │   ├── base.py             # BaseAgent
+│   │   ├── simple.py           # ChatAgent
+│   │   └── workflow.py         # WorkflowAgent
 │   │
-│   ├── rag/                    # RAG Pipeline
-│   │   ├── ingestion.py
-│   │   ├── loaders.py
-│   │   └── tools.py
+│   ├── rag/                    # Pipeline RAG
+│   │   ├── ingestion.py        # Ingestão de dados
+│   │   ├── loaders.py          # Loaders SQL / MD
+│   │   └── tools.py            # Ferramentas RAG
 │   │
 │   ├── middleware/
-│   │   └── dynamic.py
+│   │   └── dynamic.py          # Contexto tenant-aware
 │   │
 │   ├── schemas/
 │   │   ├── requests.py
 │   │   └── responses.py
 │   │
-│   └── service.py              # Orquestrador IA
+│   └── service.py              # Orquestrador IA (ADK)
 │
-├── api/router.py               # incluir /ai
+├── api/router.py               # incluir /api/v1/ai
 
-🔐 ETAPA 2 — Integração com Multi-Tenancy EXISTENTE
-✅ Regra de Ouro
 
-Toda chamada IA herda tenant_id do JWT
+📌 Decisão arquitetural
 
-Middleware Atual (mantido)
+IA não depende de outro backend
+
+Não quebra contratos existentes
+
+Pode ser desligada por feature flag
+
+🔐 4. ETAPA 2 — MULTI-TENANCY (HERDADO DO SISTEMA)
+🔑 Regra de Ouro
+
+Toda chamada IA herda o tenant do JWT
+
+Middleware já existente:
+
 request.state.tenant_id
 request.state.user_id
 
-Uso na IA
+
+Uso dentro da IA:
+
 config = {
   "configurable": {
     "tenant_id": request.state.tenant_id,
     "user_id": request.state.user_id,
-    "empresa": tenant.nome,
+    "empresa": tenant.nome
   }
 }
 
+🔒 Garantias
 
-🔒 Isso garante:
+✔ Isolamento total por hospital
+✔ RAG separado por tenant
+✔ LGPD by design
+✔ Auditoria de uso
 
-Isolamento de dados
-
-RAG por hospital
-
-Compliance LGPD
-
-🗄️ ETAPA 3 — Integração com PostgreSQL + pgvector
-📌 Extensão
+🗄️ 5. ETAPA 3 — POSTGRESQL + PGVECTOR
+📌 Extensões
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-📌 Tabelas IA (NÃO conflitam com tabelas hospitalares)
-
+📌 Tabelas IA (independentes)
 kb_docs
-
+Campo	Tipo
+id	uuid
+tenant_id	uuid
+empresa	text
+source	text
+metadata	jsonb
+created_at	timestamp
 kb_chunks
-
-Cada registro contém:
-
-tenant_id / empresa
-client_id (opcional)
-meta (origem, módulo, tipo de dado)
-
-🔍 Estratégia de Busca
+Campo	Tipo
+id	uuid
+doc_id	uuid
+tenant_id	uuid
+content	text
+embedding	vector(1536)
+metadata	jsonb
+🔍 Estratégia de Busca (Hybrid)
 
 Vector Search (pgvector)
 
 Full-text (GIN + trigram)
 
-Hybrid (RRF)
+RRF (Reciprocal Rank Fusion)
 
-➡️ Ideal para dashboards e relatórios hospitalares
+📌 Ideal para:
 
-🤖 ETAPA 4 — Casos de Uso de IA NO PRODUTO
+Dashboards
+
+Relatórios
+
+Perguntas comparativas
+
+Análises históricas
+
+🤖 6. ETAPA 4 — AGENTES NO PRODUTO (CASOS DE USO)
 🧠 Assistente Executivo
 
 “Como está a ocupação de leitos hoje comparado à semana passada?”
 
-IA chama:
+Fluxo:
 
-KPIs
+Consulta KPIs
 
-Dados históricos
+Busca histórica
 
-RAG para contexto
+RAG contextual
+
+Geração de insight
 
 🏥 Assistente Assistencial
 
 “Quais setores tiveram mais infecção hospitalar este mês?”
 
-Busca em:
+Fluxo:
 
-ccih_*
+Query em ccih_*
 
 RAG com protocolos
 
-Geração de insight
+Resposta explicável
 
 💼 Assistente Gerencial
 
 “Explique o aumento do faturamento com base nos atendimentos.”
 
-IA cruza:
+Fluxo:
 
-financeiro
+Financeiro
 
-faturamento
+Atendimentos
 
-atendimentos
+Correlação
 
-🔁 ETAPA 5 — RAG com Dados do PRÓPRIO SISTEMA
-Fontes de Conhecimento
+Narrativa gerencial
+
+🔁 7. ETAPA 5 — RAG COM DADOS DO PRÓPRIO SISTEMA
 Fonte	Estratégia
 Protocolos hospitalares	Markdown
 Documentação interna	Markdown
-Relatórios SQL	Exportação + ingest
-Indicadores históricos	Materialized views
-🔌 ETAPA 6 — Rotas de API Integradas
-Prefixo padrão
+Relatórios SQL	Export + ingest
+Indicadores históricos	Materialized Views
+
+📌 Nada sai do banco
+📌 Nada treina modelo externo
+
+🔌 8. ETAPA 6 — ROTAS DE API IA
+
+Prefixo:
+
 /api/v1/ai
 
-Rotas
-Método	Rota	Descrição
+Método	Rota	Função
 POST	/ai/chat	Chat IA
 POST	/ai/chat/stream	Streaming SSE
 POST	/ai/rag/search	Busca RAG
 POST	/ai/rag/ingest	Ingestão
-GET	/ai/rag/stats	Estatísticas
-POST	/ai/agents/invoke	Invocar agente
+GET	/ai/rag/stats	Métricas
+POST	/ai/agents/invoke	Executar agente
 
-➡️ Todas protegidas por JWT + tenant
+🔐 Todas protegidas por:
 
-🧠 ETAPA 7 — Orquestração Inteligente (WorkflowAgent)
+JWT
+
+Tenant
+
+Plano
+
+🧠 9. ETAPA 7 — WORKFLOW AGENT (INTELIGÊNCIA REAL)
 
 O WorkflowAgent decide automaticamente:
 
-Conversa simples
+Chat simples
 
 Busca RAG
 
-Web search
+Consulta SQL
 
-Ação customizada (ex: gerar relatório)
+Ação customizada
 
-Isso permite:
+Geração de relatório
 
-Evoluir para copiloto hospitalar
+📌 Isso habilita:
 
-Automatizar análises
+Copiloto hospitalar
 
-Criar alertas proativos
+Insights automáticos
 
-📊 ETAPA 8 — Integração com o Frontend Atual (React)
+Alertas proativos
+
+Automação futura
+
+📊 10. ETAPA 8 — INTEGRAÇÃO COM FRONTEND (REACT)
 Componentes sugeridos
 
 AIChatDrawer
@@ -208,11 +257,12 @@ InsightCard
 
 ExplainThisChart
 
-Exemplo
+Exemplo:
+
 <ExplainThisChart chartId="ocupacao_leitos" />
 
 
-➡️ IA recebe:
+IA recebe:
 
 ID do gráfico
 
@@ -220,10 +270,10 @@ Dados agregados
 
 Contexto do módulo
 
-🚀 ETAPA 9 — Roadmap de Implementação
+🚀 11. ETAPA 9 — ROADMAP DE IMPLEMENTAÇÃO
 Fase 1
 
-Estrutura IA no backend
+Estrutura IA
 
 pgvector
 
@@ -233,7 +283,7 @@ Fase 2
 
 Chat streaming
 
-Integração frontend
+Frontend
 
 Assistente geral
 
@@ -241,7 +291,7 @@ Fase 3
 
 WorkflowAgent
 
-Insights automáticos
+Insights
 
 Alertas
 
@@ -249,28 +299,24 @@ Fase 4
 
 Feature premium
 
-Limite por plano
+Limites por plano
 
 Métricas de uso IA
 
-🔐 Segurança & LGPD
+🔐 12. SEGURANÇA & LGPD
 
-✔ Dados isolados por tenant
-✔ Sem treino com dados sensíveis
+✔ Dados isolados
+✔ Nenhum treino externo
 ✔ Logs anonimizados
 ✔ Controle por plano
-✔ Auditoria de uso IA
+✔ Auditoria total
 
-✅ Resultado Final
+✅ RESULTADO FINAL
 
-Você terá:
+Você entrega ao mercado:
 
 ✅ IA nativa do SaaS
-
 ✅ RAG hospitalar corporativo
-
 ✅ Copiloto analítico
-
 ✅ Diferencial competitivo real
-
 ✅ Arquitetura escalável e premium

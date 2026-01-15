@@ -2,7 +2,7 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from app.api.v1.auth.dependencies import get_current_user, require_admin_role
 from app.core.database import get_db
 from app.models.user import Role, User
 from app.schemas.admin.role import RoleCreate, RoleResponse, RoleUpdate
+from app.services.audit_service import AuditService
 
 router = APIRouter(prefix="/roles", tags=["Admin - Roles"])
 
@@ -44,6 +45,7 @@ async def list_roles(
 @router.post("", response_model=RoleResponse, status_code=status.HTTP_201_CREATED)
 async def create_role(
     role_data: RoleCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin_role),
 ):
@@ -63,6 +65,20 @@ async def create_role(
     db.add(role)
     await db.commit()
     await db.refresh(role)
+    
+    # Create audit log
+    ip_address = AuditService.get_client_ip(request)
+    await AuditService.create_audit_log(
+        db=db,
+        user=current_user,
+        action="create",
+        resource="role",
+        resource_id=role.id,
+        details={"name": role.name},
+        ip_address=ip_address,
+    )
+    await db.commit()
+    
     return role
 
 
@@ -86,6 +102,7 @@ async def get_role(
 async def update_role(
     role_id: UUID,
     role_data: RoleUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin_role),
 ):
@@ -114,12 +131,27 @@ async def update_role(
 
     await db.commit()
     await db.refresh(role)
+    
+    # Create audit log
+    ip_address = AuditService.get_client_ip(request)
+    await AuditService.create_audit_log(
+        db=db,
+        user=current_user,
+        action="update",
+        resource="role",
+        resource_id=role.id,
+        details={"updated_fields": list(update_data.keys())},
+        ip_address=ip_address,
+    )
+    await db.commit()
+    
     return role
 
 
 @router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_role(
     role_id: UUID,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin_role),
 ):
@@ -145,4 +177,17 @@ async def delete_role(
     from datetime import datetime
 
     role.deleted_at = datetime.utcnow()
+    await db.commit()
+    
+    # Create audit log
+    ip_address = AuditService.get_client_ip(request)
+    await AuditService.create_audit_log(
+        db=db,
+        user=current_user,
+        action="delete",
+        resource="role",
+        resource_id=role.id,
+        details={"name": role.name},
+        ip_address=ip_address,
+    )
     await db.commit()

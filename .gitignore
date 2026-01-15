@@ -57,3 +57,8 @@ htmlcov/
 *.sln
 *.sw?
 node_modules
+# PNPM Store - NUNCA commitar
+.pnpm-store/
+**/node_modules/
+**/.pnpm-store/
+apps/admin/.pnpm-store/

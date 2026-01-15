@@ -8,8 +8,8 @@ import {
   Show,
   SimpleShowLayout,
   BooleanInput,
-  JsonField,
 } from "react-admin";
+import { JsonField } from "../components/JsonField";
 
 export const IntegrationList = () => (
   <List>

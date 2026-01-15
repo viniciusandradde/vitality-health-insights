@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        .success {
+            color: #4ade80;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="success">✅ ADMIN CONTAINER VERIFIED</h1>
+        <p>Se você está vendo esta página, o container admin está servindo o código correto.</p>
+        <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+        <p><strong>URL:</strong> <span id="url"></span></p>
+        <script>
+            document.getElementById('timestamp').textContent = new Date().toISOString();
+            document.getElementById('url').textContent = window.location.href;
+        </script>
+    </div>
+</body>
+</html>

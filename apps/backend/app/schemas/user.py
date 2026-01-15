@@ -33,12 +33,24 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+class RoleResponse(BaseModel):
+    """Role response schema."""
+
+    id: UUID
+    name: str
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class UserResponse(UserBase):
     """User response schema."""
 
     id: UUID
     tenant_id: UUID
     role_id: UUID
+    role: Optional[RoleResponse] = None
     is_active: bool
     is_verified: bool
     last_login_at: Optional[str] = None
